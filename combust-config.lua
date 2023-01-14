@@ -1,8 +1,8 @@
 return {
-    entry = "src/main.lua",
+    entry = "main.lua",
     path = {
-        "src/",
-        "lua_modules/share/lua/5.4/"
+        "lua_modules/share/lua/5.4/",
+        "src/"
     },
     cpath = {
         "lua_modules/lib/lua/5.4/",
@@ -12,8 +12,10 @@ return {
         version = "5.4",
         interpreter = "/usr/local/bin/lua-5.4",
         compiler = "/usr/local/bin/luac-5.4",
-        runtime = "/usr/local/lib/liblua.a",
+        runtime = "/usr/local/lib/liblua.dylib",
     },
 
-    output_format = "binary"
+    c_compiler = "clang",
+
+    output_format = "self-extract"
 }

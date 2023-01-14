@@ -1,9 +1,10 @@
 local file = require("pl.file")
 local dir = require("pl.dir")
 local path = require("pl.path")
-local pprint = require("pprint")
 ---@type LuaFileSystem
 local lfs = require("lfs")
+
+local executables = require("executables")
 
 local CURRENT_DIR = path.currentdir()
 
@@ -14,6 +15,7 @@ if not path.exists("combust-config.lua") then error("Config file not found in di
 ---@field path string[]
 ---@field cpath string[]
 ---@field lua { version: string, interpreter: string, compiler: string, runtime: string }
+---@field c_compiler string
 ---@field output_format string
 local config = assert(dofile("combust-config.lua"))
 
@@ -49,8 +51,6 @@ for _, dir in ipairs(config.cpath) do
     recursive_add_files(dir, ".so", c_modules)
 end
 
-pprint(lua_modules, c_modules)
-
 local build_directories = {
     base    = "build",
     obj     = "build/obj",
@@ -60,24 +60,67 @@ local build_directories = {
 
 path.rmdir(build_directories.base)
 
-for _, dir in ipairs(build_directories) do
+for _, dir in pairs(build_directories) do
     path.mkdir(dir)
 end
 
 ---@param module Module
+---@return Module
 local function compile(module)
-    print("Compiling "..module.name.."...")
-
     local outp, outf = path.join(build_directories.obj,path.dirname(module.name)),
                                  path.join(build_directories.obj, module.name)
     dir.makepath(outp)
 
     local cmd = string.format("%s -s -o %s %s", config.lua.compiler, outf, module.path)
-    print(cmd)
+    print("$ "..cmd)
 
     os.execute(cmd)
+
+    return { name = module.name, path = outf }
 end
 
+---@type Module[], Module[]
+local luac_mods, cmods = {}, {}
+print("Compiling Lua files...")
 for _, luafile in ipairs(lua_modules) do
-    compile(luafile)
+    table.insert(luac_mods, compile(luafile))
 end
+
+for _, cfile in ipairs(c_modules) do
+    print("Copying "..cfile.name.."...")
+    local outp, outf = path.join(build_directories.dylib,path.dirname(cfile.name)),
+                                 path.join(build_directories.dylib, cfile.name)
+    dir.makepath(outp)
+    file.copy(cfile.path, outf)
+    table.insert(cmods, { name = cfile.name, path = outf })
+end
+
+local entry do
+    for _, mod in ipairs(luac_mods) do
+        if mod.name == config.entry then
+            entry = mod
+            break
+        end
+    end
+
+    if not entry then error("Entry point not found in compiled files") end
+end
+
+--Remove duplicate modules
+local function remove_duplicates(mods)
+    local names = {}
+    local new = {}
+    for _, mod in ipairs(mods) do
+        if not names[mod.name] then
+            table.insert(new, mod)
+            names[mod.name] = true
+        end
+    end
+    return new
+end
+
+luac_mods = remove_duplicates(luac_mods)
+cmods = remove_duplicates(cmods)
+
+print("Building executable...")
+executables[config.output_format](luac_mods, cmods, build_directories.bin, config)

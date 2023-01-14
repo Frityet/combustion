@@ -2,16 +2,16 @@
     {
         "directory": "/Users/frityet/Documents/combustion",
         "arguments": [
-            "/usr/local/opt/llvm/bin/clang++",
+            "/usr/local/opt/llvm/bin/clang",
             "-c",
             "-Qunused-arguments",
             "-m64",
             "-g",
             "-O0",
-            "-std=c++17",
+            "-std=c99",
             "-Isrc",
             "-Iextern/glob/",
-            "-I/usr/local/opt/lua/include/lua5.4",
+            "-I/usr/local/include",
             "-Wall",
             "-Wextra",
             "-Werror",
@@ -19,12 +19,11 @@
             "-Wno-unused-parameter",
             "-Wno-unused-variable",
             "-fsanitize=address",
-            "-fsanitize=leak",
             "-fsanitize=undefined",
             "-o",
             "build/.objs/NUKLEAR/macosx/x86_64/debug/src/main.c.o",
-            "src/glob.cpp"
+            "src/executables/unzip-and-exec.c"
         ],
-        "file": "src/glob.cpp"
+        "file": "src/executables/unzip-and-exec.c"
     }
 ]
