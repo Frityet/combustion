@@ -31,12 +31,13 @@ local lua_modules, c_modules = {}, {}
 local function recursive_add_files(dir, ext, list, base)
     for file in lfs.dir(dir) do
         if file == "." or file == ".." then goto next end
-        local abs_path = path.abspath(path.join(dir, file))
+        local rel_path = path.join(dir, file)
+        local abs_path = path.abspath(rel_path)
         if path.isfile(abs_path) and path.extension(abs_path) == ext then
-            print("- \x1b[32mFound\x1b[0m "..file.." at "..abs_path.."")
+            print("- \x1b[32mFound\x1b[0m "..rel_path)
             table.insert(list, { name = path.join(base or "", file), path = abs_path })
         elseif path.isdir(abs_path) then
-            recursive_add_files(path.join(dir, file), ext, list, path.join(base or "", file))
+            recursive_add_files(rel_path, ext, list, path.join(base or "", file))
         end
 
         ::next::
@@ -48,7 +49,7 @@ for _, dir in ipairs(config.path) do
     recursive_add_files(dir, ".lua", lua_modules)
 end
 
-print("\x1b[33mFinding c modules...\x1b[0m")
+print("\x1b[33mFinding native modules...\x1b[0m")
 for _, dir in ipairs(config.cpath) do
     recursive_add_files(dir, ".so", c_modules)
 end
@@ -73,8 +74,8 @@ local function compile(module)
                                  path.join(build_directories.obj, module.name)
     dir.makepath(outp)
 
-    local cmd = string.format("%s -s -o %s %s", config.lua.compiler, outf, module.path)
-    -- print("$ "..cmd)
+    local cmd = config.lua.compiler:gsub("%$%((input)%)", module.path)
+    cmd = cmd:gsub("%$%((output)%)", outf)
 
     os.execute(cmd)
 
@@ -127,7 +128,7 @@ luac_mods = remove_duplicates(luac_mods)
 c_mods = remove_duplicates(c_mods)
 
 print("\x1b[33mBuilding executable...\x1b[0m")
-print("- \x1b[32mUsing\x1b[0m "..config.output_format.."")
+print("- \x1b[33mUsing\x1b[0m \x1b[35m"..config.output_format.."\x1b[0m")
 
 local lprint = print
 function print(...) return lprint("[\x1b[34m"..config.output_format.." build\x1b[0m]", ...) end

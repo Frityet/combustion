@@ -123,7 +123,6 @@ local EXECUTABLE_ENTRY = [[
 
     int main(int argc, const char *argv[])
     {
-        int err = 0;
         struct zip_error ziperr;
         zip_source_t *src = zip_source_buffer_create(module_archive, module_archive_size, 0, &ziperr);
         if (src == NULL) {
@@ -270,6 +269,8 @@ end
 ---@param config Config
 return function (objs, cmods, out, config)
     file.delete(path.join(out, "module_archive.zip"))
+
+    print("\x1b[33mCreating archive\x1b[0m")
     local archive = assert(zip.open(path.join(out, "module_archive.zip"), zip.OR(zip.CREATE, zip.EXCL)))
 
     local archive_paths = {
@@ -286,22 +287,22 @@ return function (objs, cmods, out, config)
     print("\x1b[33mAdding lua modules\x1b[0m")
     for _, obj in ipairs(objs) do
         archive:add(path.join(archive_paths.lua, obj.name), "file", obj.path)
-        print("- \x1b[32m"..obj.name.."\x1b[0m -> \x1b[32m"..path.join(archive_paths.lua, obj.name).."\x1b[0m")
+        print("- \x1b[32mCompressed\x1b[0m "..obj.name)
     end
 
-    print("\x1b[33mAdding c modules\x1b[0m")
+    print("\x1b[33mAdding native modules\x1b[0m")
     for _, cmod in ipairs(cmods) do
         archive:add(path.join(archive_paths.lib, cmod.name), "file", cmod.path)
-        print("- \x1b[32m"..cmod.name.."\x1b[0m -> \x1b[32m"..path.join(archive_paths.lib, cmod.name).."\x1b[0m")
+        print("- \x1b[32mCompressed\x1b[0m "..cmod.name)
     end
 
     print("\x1b[33mAdding runtime\x1b[0m")
     archive:add(path.join(archive_paths.bin, "lua"), "file", config.lua.interpreter)
-    print("- \x1b[32mlua\x1b[0m -> \x1b[32m"..path.join(archive_paths.bin, "lua").."\x1b[0m")
+    print("- \x1b[32mCompressed\x1b[0m lua")
     archive:add(path.join(archive_paths.bin, "liblua.dylib"), "file", config.lua.runtime)
-    print("- \x1b[32mliblua.dylib\x1b[0m -> \x1b[32m"..path.join(archive_paths.bin, "liblua.dylib").."\x1b[0m")
+    print("- \x1b[32mCompressed\x1b[0m liblua.dylib")
     archive:add(path.join(archive_paths.bin, "_ENTRYPOINT_"), "string", config.entry)
-    print("- \x1b[32m_ENTRYPOINT_\x1b[0m -> \x1b[32m"..path.join(archive_paths.bin, "_ENTRYPOINT_").."\x1b[0m")
+    print("- \x1b[32mCompressed\x1b[0m _ENTRYPOINT_")
 
     print("\x1b[33mNote: if you receive a crash here, just run the program again (library issue)\x1b[0m")
     archive:close()

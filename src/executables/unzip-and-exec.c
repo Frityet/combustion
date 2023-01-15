@@ -117,7 +117,6 @@ static void extract_file(struct zip *zip, const struct zip_stat *stat, const cha
 
 int main(int argc, const char *argv[])
 {
-    int err = 0;
     struct zip_error ziperr;
     zip_source_t *src = zip_source_buffer_create(module_archive, module_archive_size, 0, &ziperr);
     if (src == NULL) {

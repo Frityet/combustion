@@ -1,5 +1,5 @@
+local mod = require("out")
 local inspect = require("inspect")
-local mod = require("mod")
 
 print("Hello, World!")
 

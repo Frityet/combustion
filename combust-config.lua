@@ -40,23 +40,47 @@ end
 
 local os = execute("uname")():gsub("\n", "")
 
+-- return {
+--     entry = "main.lua",
+--     path = {
+--         "lua_modules/share/lua/5.4/",
+--         "src/"
+--     },
+--     cpath = {
+--         "lua_modules/lib/lua/5.4/",
+--     },
+
+--     lua = {
+--         version     = "5.4",
+--         interpreter = lua_basedir.."/bin/lua5.4",
+--         compiler    = "luac5.4 -s -o $(output) $(input)",
+
+--         --If OS is linux, use .so, otherwise use .dylib
+--         runtime     = lua_basedir..(os == "Darwin" and "/lib/liblua5.4.dylib" or "/lib/liblua5.4.so"),
+--     },
+
+--     c_compiler = cc,
+
+--     output_format = "self-extract"
+-- }
+
 return {
     entry = "main.lua",
     path = {
-        "lua_modules/share/lua/5.4/",
+        "lua_modules/share/lua/5.1/",
         "src/"
     },
     cpath = {
-        "lua_modules/lib/lua/5.4/",
+        "lua_modules/lib/lua/5.1/",
     },
 
     lua = {
-        version     = "5.4",
-        interpreter = lua_basedir.."/bin/lua5.4",
-        compiler    = lua_basedir.."/bin/luac5.4",
+        version     = "JIT",
+        interpreter = lua_basedir.."/bin/luajit-2.1.0-beta3",
+        compiler    = lua_basedir.."/bin/luajit-2.1.0-beta3 -b -s -t raw $(input) $(output)",
 
         --If OS is linux, use .so, otherwise use .dylib
-        runtime     = lua_basedir..(os == "Darwin" and "/lib/liblua5.4.dylib" or "/lib/liblua5.4.so"),
+        runtime     = lua_basedir..(os == "Darwin" and "/lib/libluajit.dylib" or "/lib/libluajit.so"),
     },
 
     c_compiler = cc,
