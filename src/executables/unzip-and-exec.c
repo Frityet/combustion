@@ -209,9 +209,9 @@ static int execute_lua( const char *entrypoint,
         p += snprintf(p, path_code_length - (p - path_code), "package.cpath=\"%s/?.so;%s/?.so;\";", c_modules_abs, cwd);
     }
 
-    char **args = malloc(sizeof(char *) * (argc + 4));
+    char **args = calloc(argc + 5, sizeof(char *));
     if (args == NULL) {
-        perror_f("Could not allocate memory for args. Attempted to allocate %zu bytes", sizeof(char *) * (argc + 4));
+        perror_f("Could not allocate memory for args. Attempted to allocate %zu bytes", sizeof(char *) * (argc + 5));
         return 1;
     }
 
@@ -221,7 +221,7 @@ static int execute_lua( const char *entrypoint,
         entrypoint_abs, //The entrypoint file
     }, sizeof(char *) * 4);
 
-    memcpy(args + 4, argv + 1, sizeof(char *) * (argc - 1));
+    memcpy(args + 4, argv + 1, sizeof(char *) * (argc));
 
     chmod(interpreter_abs, 0755);
     int err = execv(interpreter_abs, args);

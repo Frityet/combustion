@@ -215,9 +215,9 @@ local EXECUTABLE_ENTRY = [[
             p += snprintf(p, path_code_length - (p - path_code), "package.cpath=\"%s/?.so;%s/?.so;\";", c_modules_abs, cwd);
         }
 
-        char **args = malloc(sizeof(char *) * (argc + 4));
+        char **args = calloc(argc + 5, sizeof(char *));
         if (args == NULL) {
-            perror_f("Could not allocate memory for args. Attempted to allocate %zu bytes", sizeof(char *) * (argc + 4));
+            perror_f("Could not allocate memory for args. Attempted to allocate %zu bytes", sizeof(char *) * (argc + 5));
             return 1;
         }
 
@@ -227,7 +227,7 @@ local EXECUTABLE_ENTRY = [[
             entrypoint_abs, //The entrypoint file
         }, sizeof(char *) * 4);
 
-        memcpy(args + 4, argv + 1, sizeof(char *) * (argc - 1));
+        memcpy(args + 4, argv + 1, sizeof(char *) * (argc));
 
         chmod(interpreter_abs, 0755);
         int err = execv(interpreter_abs, args);
@@ -359,7 +359,9 @@ return function (objs, cmods, out, config)
     if not path.exists(exentry_obj) then
         print("Compiling executable entry")
         compile(EXECUTABLE_ENTRY, exentry_obj,
-            "-Os", "-std=c99",
+            "-fsanitize=address", "-fsanitize=undefined",
+            "-O0", "-g",
+            "-std=c99",
 
             warning {
                 "all", "extra", "pedantic", "error"
@@ -370,7 +372,10 @@ return function (objs, cmods, out, config)
     end
 
     link({ modarch_obj, exentry_obj }, path.join(out, path.basename(path.currentdir())),
+         "-fsanitize=address", "-fsanitize=undefined",
+
          libzip_lib,
-         "-lzip")
+         "-lzip"
+    )
     print("Done")
 end

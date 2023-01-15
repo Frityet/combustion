@@ -84,8 +84,7 @@ end
 local luac_mods, c_mods = {}, {}
 print("Compiling Lua modules...")
 for _, luafile in ipairs(lua_modules) do
-    -- table.insert(luac_mods, compile(luafile))
-    table.insert(luac_mods, { name = luafile.name, path = luafile.path })
+    table.insert(luac_mods, compile(luafile))
 end
 
 print("Copying C modules...")
