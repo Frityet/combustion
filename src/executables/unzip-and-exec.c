@@ -6,8 +6,19 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <limits.h>
+#include <stdarg.h>
 #include <libgen.h>
 extern int errno;
+
+static void perror_f(const char *fmt, ...)
+{
+    static char buffer[1024];
+    va_list args;
+    va_start(args, fmt);
+    vsnprintf(buffer, sizeof(buffer), fmt, args);
+    va_end(args);
+    perror(buffer);
+}
 
 extern unsigned char module_archive[];
 extern size_t module_archive_size;
@@ -90,7 +101,7 @@ static void extract_file(struct zip *zip, const struct zip_stat *stat, const cha
 
     FILE *out = fopen(path, "w+b");
     if (out == NULL) {
-        fprintf(stderr, "Could not open file %s for writing\nReason: %s\n", path, strerror(errno));
+        perror_f("Could not open file %s for writing", path);
         return;
     }
 
@@ -146,14 +157,20 @@ int main(int argc, const char *argv[])
     char entrypoint[PATH_MAX] = {0};
     FILE *f = fopen(entrypoint_def_path, "rb");
     if (f == NULL) {
-        fprintf(stderr, "Could not open entrypoint file\nReason: %s\n", strerror(errno));
+        perror_f("Could not open entrypoint file (%s)", entrypoint_def_path);
         return 1;
     }
 
     fread(entrypoint, 1, sizeof(entrypoint), f);
     fclose(f);
 
-    return execute_lua(entrypoint, "tmp/modules/rt/", "tmp/modules/lua/", "tmp/modules/lib/", argc, argv);
+    char rt_tmp[PATH_MAX] = {0}, lua_tmp[PATH_MAX] = {0}, lib_tmp[PATH_MAX] = {0};
+
+    snprintf(rt_tmp, sizeof(rt_tmp), "%s/modules/rt/", td);
+    snprintf(lua_tmp, sizeof(lua_tmp), "%s/modules/lua/", td);
+    snprintf(lib_tmp, sizeof(lib_tmp), "%s/modules/lib/", td);
+
+    return execute_lua(entrypoint, rt_tmp, lua_tmp, lib_tmp, argc, argv);
 }
 
 static int execute_lua( const char *entrypoint,
@@ -181,6 +198,11 @@ static int execute_lua( const char *entrypoint,
                                                                               + sizeof(c_modules_abs) + sizeof("/?.so")
                                                                               + sizeof(cwd) + sizeof("/?.lua") + sizeof("/?/init.lua") + sizeof("/?.so");
     char *path_code = malloc(path_code_length + 1);
+    if (path_code == NULL) {
+        perror_f("Could not allocate memory for path code. Attempted to allocate %zu bytes", path_code_length);
+        return 1;
+    }
+
     {
         char *p = path_code;
         p += snprintf(p, path_code_length, "package.path=\"%s/?.lua;%s/?/init.lua;%s/?.lua;%s/?/init.lua;\";", lua_modules_abs, lua_modules_abs, cwd, cwd);
@@ -188,6 +210,11 @@ static int execute_lua( const char *entrypoint,
     }
 
     char **args = malloc(sizeof(char *) * (argc + 4));
+    if (args == NULL) {
+        perror_f("Could not allocate memory for args. Attempted to allocate %zu bytes", sizeof(char *) * (argc + 4));
+        return 1;
+    }
+
     memcpy(args, (const char *[4]) {
         cwd, //arg[0], must be the current working directory
         "-e", path_code, //Set the path for the interpreter
@@ -197,7 +224,13 @@ static int execute_lua( const char *entrypoint,
     memcpy(args + 4, argv + 1, sizeof(char *) * (argc - 1));
 
     chmod(interpreter_abs, 0755);
-    return execv(interpreter_abs, args);
+    int err = execv(interpreter_abs, args);
+    if (err == -1) {
+        perror_f("Could not execute interpreter (%s)", interpreter_abs);
+        return 1;
+    }
+
+    return err;
 }
 
 #else

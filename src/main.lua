@@ -35,7 +35,6 @@ local function recursive_add_files(dir, ext, list, base)
         if path.isfile(abs_path) and path.extension(abs_path) == ext then
             table.insert(list, { name = path.join(base or "", file), path = abs_path })
         elseif path.isdir(abs_path) then
-            print(path.join(base or "", file))
             recursive_add_files(path.join(dir, file), ext, list, path.join(base or "", file))
         end
 
@@ -43,10 +42,12 @@ local function recursive_add_files(dir, ext, list, base)
     end
 end
 
+print("Finding lua modules...")
 for _, dir in ipairs(config.path) do
     recursive_add_files(dir, ".lua", lua_modules)
 end
 
+print("Finding c modules...")
 for _, dir in ipairs(config.cpath) do
     recursive_add_files(dir, ".so", c_modules)
 end
@@ -80,19 +81,20 @@ local function compile(module)
 end
 
 ---@type Module[], Module[]
-local luac_mods, cmods = {}, {}
-print("Compiling Lua files...")
+local luac_mods, c_mods = {}, {}
+print("Compiling Lua modules...")
 for _, luafile in ipairs(lua_modules) do
-    table.insert(luac_mods, compile(luafile))
+    -- table.insert(luac_mods, compile(luafile))
+    table.insert(luac_mods, { name = luafile.name, path = luafile.path })
 end
 
+print("Copying C modules...")
 for _, cfile in ipairs(c_modules) do
-    print("Copying "..cfile.name.."...")
     local outp, outf = path.join(build_directories.dylib,path.dirname(cfile.name)),
                                  path.join(build_directories.dylib, cfile.name)
     dir.makepath(outp)
     file.copy(cfile.path, outf)
-    table.insert(cmods, { name = cfile.name, path = outf })
+    table.insert(c_mods, { name = cfile.name, path = outf })
 end
 
 local entry do
@@ -120,7 +122,7 @@ local function remove_duplicates(mods)
 end
 
 luac_mods = remove_duplicates(luac_mods)
-cmods = remove_duplicates(cmods)
+c_mods = remove_duplicates(c_mods)
 
 print("Building executable...")
-executables[config.output_format](luac_mods, cmods, build_directories.bin, config)
+executables[config.output_format](luac_mods, c_mods, build_directories.bin, config)
