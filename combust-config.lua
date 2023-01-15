@@ -52,8 +52,21 @@ return {
         runtime     = lua_basedir..(osname == "Darwin" and "/lib/libluajit.dylib" or "/lib/libluajit.so"),
     },
 
-    --C compiler to use, will be executed
-    c_compiler = os.getenv("CC") or "cc",
+    c = {
+        compiler = os.getenv("CC") or "cc",
+
+        --Additional flags to pass to the compiler
+        flags = {
+
+        },
+
+        linker = os.getenv("CC") or "cc",
+
+        --Additional flags to pass to the linker
+        ldflags = {
+            "-flto"
+        }
+    },
 
     --Path to libzip
     --the directory specified must contain `lib` which contains `libzip.a`

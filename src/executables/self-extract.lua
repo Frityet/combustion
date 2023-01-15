@@ -311,20 +311,24 @@ return function (objs, cmods, out, config)
     ---@param out string
     ---@param ... string
     local function compile(code, out, ...)
-        local cmd = string.format("%s -x c -c %s -o %s -", config.c_compiler, table.concat({...}, " "), out)
+        local cflags = table.concat({..., table.unpack(config.c.flags)}, ' ')
 
+
+        local cmd = string.format("%s %s -x c -c -o %s -", config.c.compiler, cflags, out)
         local f = assert(io.popen(cmd, "w"))
         f:write(code)
-        f:close()
+        if not f:close() then error("Failed to compile") end
     end
 
     ---@param objs string[]
     ---@param out string
     ---@param ... string
     local function link(objs, out, ...)
-        local cmd = string.format("%s %s -o %s %s", config.c_compiler, table.concat({...}, " "), out, table.concat(objs, " "))
+        local ldflags = table.concat({..., table.unpack(config.c.ldflags)}, ' ')
+        local input = table.concat(objs, ' ')
 
-        os.execute(cmd)
+        local cmd = string.format("%s %s %s -o %s", config.c.linker, input, ldflags, out)
+        if os.execute(cmd) ~= 0 then error("Failed to link") end
     end
 
     ---@param opt { [string] : string }
@@ -376,7 +380,6 @@ return function (objs, cmods, out, config)
 
     print("\x1b[33mLinking executable\x1b[0m")
     link({ modarch_obj, exentry_obj }, path.join(out, "bin", path.basename(path.currentdir())),
-         "-flto",
          "-L"..path.join(config.libzip_dir, "lib"),
          "-lzip"
     )
