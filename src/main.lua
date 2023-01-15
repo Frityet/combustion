@@ -132,6 +132,6 @@ print("- \x1b[33mUsing\x1b[0m \x1b[35m"..config.output_format.."\x1b[0m")
 
 local lprint = print
 function print(...) return lprint("[\x1b[34m"..config.output_format.." build\x1b[0m]", ...) end
-executables[config.output_format](luac_mods, c_mods, build_directories.bin, config)
+executables[config.output_format](luac_mods, c_mods, build_directories.base, config)
 print = lprint
 print("\x1b[32mDone\x1b[0m")

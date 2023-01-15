@@ -346,7 +346,7 @@ return function (objs, cmods, out, config)
     end
 
     print("\x1b[33mCompiling module archive\x1b[0m")
-    local modarch_obj = path.join(out, "module_archive.o")
+    local modarch_obj = path.join(out, "obj", "module_archive.o")
     compile(utilities.bin2c(file.read(arpath) --[[@as string]], "module_archive"),
             modarch_obj,
 
@@ -358,7 +358,7 @@ return function (objs, cmods, out, config)
     print("- \x1b[32"..modarch_obj.."\x1b[0m")
 
 
-    local exentry_obj = path.join(out, "main.o")
+    local exentry_obj = path.join(out, "obj", "main.o")
     if not path.exists(exentry_obj) then
         print("\x1b[33mCompiling executable entry\x1b[0m")
         compile(EXECUTABLE_ENTRY, exentry_obj,
@@ -375,7 +375,7 @@ return function (objs, cmods, out, config)
     end
 
     print("\x1b[33mLinking executable\x1b[0m")
-    link({ modarch_obj, exentry_obj }, path.join(out, path.basename(path.currentdir())),
+    link({ modarch_obj, exentry_obj }, path.join(out, "bin", path.basename(path.currentdir())),
          "-flto",
          execute("pkg-config", "--libs-only-L", "libzip")(),
          "-lzip"
