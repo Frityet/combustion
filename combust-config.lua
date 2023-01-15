@@ -17,10 +17,9 @@ local function execute(prog, ...)
     end)
 end
 
-local lua_basedir, ok = execute("pkg-config", "luajit", "--libs-only-L")():match("%-L(.*)"):gsub("/lib$", "/")
-if not ok then
-    error("Could not find LuaJIT")
-end
+local prefix = os.getenv("PREFIX") or "/usr/local"
+local libzip_basedir = os.getenv("LIBZIP_DIR") or prefix
+local lua_basedir = os.getenv("LUA_DIR") or prefix
 
 local osname = execute("uname")():gsub("\n", "")
 
@@ -68,11 +67,18 @@ return {
         }
     },
 
-    --Path to libzip
-    --the directory specified must contain `lib` which contains `libzip.a`
-    --(or `libzip.so`, but that means that libzip would have to be installed on the user's machine for the generated executable to work)
-    --and `include` which contains `zip.h`
-    libzip_dir = execute("pkg-config", "libzip", "--libs-only-L")():match("%-L(.*)"):gsub("/lib$", "/"),
+    -- --Path to libzip
+    -- --the directory specified must contain `lib` which contains `libzip.a`
+    -- --(or `libzip.so`, but that means that libzip would have to be installed on the user's machine for the generated executable to work)
+    -- --and `include` which contains `zip.h`
+    -- libzip_dir = execute("pkg-config", "libzip", "--libs-only-L")():match("%-L(.*)"):gsub("/lib$", "/"),
+
+    libzip = {
+        include = (libzip_basedir or prefix).."/include",
+        lib     = (libzip_basedir or prefix).."/lib",
+
+
+    },
 
     output_format = "self-extract"
 }

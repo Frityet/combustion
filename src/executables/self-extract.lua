@@ -299,8 +299,8 @@ return function (objs, cmods, out, config)
     print("\x1b[33mAdding runtime\x1b[0m")
     archive:add(path.join(archive_paths.bin, "lua"), "file", config.lua.interpreter)
     print("- \x1b[32mCompressed\x1b[0m lua")
-    archive:add(path.join(archive_paths.bin, "liblua.dylib"), "file", config.lua.runtime)
-    print("- \x1b[32mCompressed\x1b[0m liblua.dylib")
+    archive:add(path.join(archive_paths.bin, path.basename(config.lua.runtime)), "file", config.lua.runtime)
+    print("- \x1b[32mCompressed\x1b[0m liblua")
     archive:add(path.join(archive_paths.bin, "_ENTRYPOINT_"), "string", config.entry)
     print("- \x1b[32mCompressed\x1b[0m _ENTRYPOINT_")
 
@@ -311,24 +311,29 @@ return function (objs, cmods, out, config)
     ---@param out string
     ---@param ... string
     local function compile(code, out, ...)
-        local cflags = table.concat({..., table.unpack(config.c.flags)}, ' ')
-
+        local cflags = table.concat({...}, ' ')
+        cflags = cflags.." "..table.concat(config.c.flags, ' ')
 
         local cmd = string.format("%s %s -x c -c -o %s -", config.c.compiler, cflags, out)
         local f = assert(io.popen(cmd, "w"))
         f:write(code)
-        if not f:close() then error("Failed to compile") end
+        if not f:close() then
+            error("Failed to compile, executed "..cmd)
+        end
     end
 
     ---@param objs string[]
     ---@param out string
     ---@param ... string
     local function link(objs, out, ...)
-        local ldflags = table.concat({..., table.unpack(config.c.ldflags)}, ' ')
+        local ldflags = table.concat({...}, ' ')
+        ldflags = ldflags.." "..table.concat(config.c.ldflags, ' ')
         local input = table.concat(objs, ' ')
 
         local cmd = string.format("%s %s %s -o %s", config.c.linker, input, ldflags, out)
-        if os.execute(cmd) ~= 0 then error("Failed to link") end
+        if not (os.execute(cmd)) then
+            error("Failed to link, executed "..cmd)
+        end
     end
 
     ---@param opt { [string] : string }
@@ -373,14 +378,14 @@ return function (objs, cmods, out, config)
                 "all", "extra", "pedantic", "error"
             },
 
-            "-I"..path.join(config.libzip_dir, "include")
+            "-I"..config.libzip.include
         )
         print("- \x1b[32"..exentry_obj.."\x1b[0m")
     end
 
     print("\x1b[33mLinking executable\x1b[0m")
     link({ modarch_obj, exentry_obj }, path.join(out, "bin", path.basename(path.currentdir())),
-         "-L"..path.join(config.libzip_dir, "lib"),
+         "-L"..config.libzip.lib,
          "-lzip"
     )
     print("- \x1b[32"..path.join(out, path.basename(path.currentdir())).."\x1b[0m")
