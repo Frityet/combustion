@@ -33,6 +33,7 @@ local function recursive_add_files(dir, ext, list, base)
         if file == "." or file == ".." then goto next end
         local abs_path = path.abspath(path.join(dir, file))
         if path.isfile(abs_path) and path.extension(abs_path) == ext then
+            print("- \x1b[32mFound\x1b[0m "..file.." at "..abs_path.."")
             table.insert(list, { name = path.join(base or "", file), path = abs_path })
         elseif path.isdir(abs_path) then
             recursive_add_files(path.join(dir, file), ext, list, path.join(base or "", file))
@@ -42,12 +43,12 @@ local function recursive_add_files(dir, ext, list, base)
     end
 end
 
-print("Finding lua modules...")
+print("\x1b[33mFinding lua modules...\x1b[0m")
 for _, dir in ipairs(config.path) do
     recursive_add_files(dir, ".lua", lua_modules)
 end
 
-print("Finding c modules...")
+print("\x1b[33mFinding c modules...\x1b[0m")
 for _, dir in ipairs(config.cpath) do
     recursive_add_files(dir, ".so", c_modules)
 end
@@ -73,7 +74,7 @@ local function compile(module)
     dir.makepath(outp)
 
     local cmd = string.format("%s -s -o %s %s", config.lua.compiler, outf, module.path)
-    print("$ "..cmd)
+    -- print("$ "..cmd)
 
     os.execute(cmd)
 
@@ -82,18 +83,20 @@ end
 
 ---@type Module[], Module[]
 local luac_mods, c_mods = {}, {}
-print("Compiling Lua modules...")
+print("\x1b[33mCompiling Lua modules...\x1b[0m")
 for _, luafile in ipairs(lua_modules) do
     table.insert(luac_mods, compile(luafile))
+    print("- \x1b[32mCompiled\x1b[0m "..luafile.name.."")
 end
 
-print("Copying C modules...")
+print("\x1b[33mCopying C modules...\x1b[0m")
 for _, cfile in ipairs(c_modules) do
     local outp, outf = path.join(build_directories.dylib,path.dirname(cfile.name)),
                                  path.join(build_directories.dylib, cfile.name)
     dir.makepath(outp)
     file.copy(cfile.path, outf)
     table.insert(c_mods, { name = cfile.name, path = outf })
+    print("- \x1b[32mCopied\x1b[0m "..cfile.name.."")
 end
 
 local entry do
@@ -123,5 +126,11 @@ end
 luac_mods = remove_duplicates(luac_mods)
 c_mods = remove_duplicates(c_mods)
 
-print("Building executable...")
+print("\x1b[33mBuilding executable...\x1b[0m")
+print("- \x1b[32mUsing\x1b[0m "..config.output_format.."")
+
+local lprint = print
+function print(...) return lprint("[\x1b[34m"..config.output_format.." build\x1b[0m]", ...) end
 executables[config.output_format](luac_mods, c_mods, build_directories.bin, config)
+print = lprint
+print("\x1b[32mDone\x1b[0m")

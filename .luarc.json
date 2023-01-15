@@ -24,7 +24,7 @@
         "lua_modules/share/lua/5.4/?/init.lua"
     ],
     "runtime.pathStrict": true,
-    "runtime.version": "Lua 5.4",
+    "runtime.version": "LuaJIT",
     "workspace.ignoreDir": [
         ".vscode",
         "lua_modules/share/lua/5.4/couchmc"

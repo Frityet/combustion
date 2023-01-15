@@ -6,3 +6,7 @@ lsp/
 build/
 .cache/
 .idea/
+/luarocks
+/lua
+/lua_modules
+/.luarocks

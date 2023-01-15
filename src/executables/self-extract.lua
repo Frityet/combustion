@@ -30,7 +30,7 @@ local EXECUTABLE_ENTRY = [[
     extern size_t module_archive_size;
 
     static int execute_lua( const char *entrypoint,
-                            const char *rt, const char *lua_modules, const char *c_modules,
+                            const char *bin, const char *lua_modules, const char *c_modules,
                             int argc, const char *argv[static argc]);
 
     /* recursive mkdir */
@@ -158,7 +158,7 @@ local EXECUTABLE_ENTRY = [[
         zip_source_close(src);
 
         char entrypoint_def_path[PATH_MAX] = {0};
-        snprintf(entrypoint_def_path, sizeof(entrypoint_def_path), "%s/modules/rt/_ENTRYPOINT_", td);
+        snprintf(entrypoint_def_path, sizeof(entrypoint_def_path), "%s/bin/_ENTRYPOINT_", td);
 
         char entrypoint[PATH_MAX] = {0};
         FILE *f = fopen(entrypoint_def_path, "rb");
@@ -170,25 +170,25 @@ local EXECUTABLE_ENTRY = [[
         fread(entrypoint, 1, sizeof(entrypoint), f);
         fclose(f);
 
-        char rt_tmp[PATH_MAX] = {0}, lua_tmp[PATH_MAX] = {0}, lib_tmp[PATH_MAX] = {0};
+        char bin_tmp[PATH_MAX] = {0}, lua_tmp[PATH_MAX] = {0}, lib_tmp[PATH_MAX] = {0};
 
-        snprintf(rt_tmp, sizeof(rt_tmp), "%s/modules/rt/", td);
-        snprintf(lua_tmp, sizeof(lua_tmp), "%s/modules/lua/", td);
-        snprintf(lib_tmp, sizeof(lib_tmp), "%s/modules/lib/", td);
+        snprintf(bin_tmp, sizeof(bin_tmp), "%s/bin/", td);
+        snprintf(lua_tmp, sizeof(lua_tmp), "%s/lua/", td);
+        snprintf(lib_tmp, sizeof(lib_tmp), "%s/lib/", td);
 
-        return execute_lua(entrypoint, rt_tmp, lua_tmp, lib_tmp, argc, argv);
+        return execute_lua(entrypoint, bin_tmp, lua_tmp, lib_tmp, argc, argv);
     }
 
     static int execute_lua( const char *entrypoint,
-                            const char *rt, const char *lua_modules, const char *c_modules,
+                            const char *bin, const char *lua_modules, const char *c_modules,
                             int argc, const char *argv[static argc])
     {
-        char    lua_modules_abs[PATH_MAX] = {0}, c_modules_abs[PATH_MAX] = {0}, rt_abs[PATH_MAX] = {0}, entrypoint_abs[PATH_MAX] = {0},
+        char    lua_modules_abs[PATH_MAX] = {0}, c_modules_abs[PATH_MAX] = {0}, bin_abs[PATH_MAX] = {0}, entrypoint_abs[PATH_MAX] = {0},
                 cwd[PATH_MAX] = {0}, interpreter_abs[PATH_MAX] = {0};
 
         realpath(lua_modules, lua_modules_abs);
         realpath(c_modules, c_modules_abs);
-        realpath(rt, rt_abs);
+        realpath(bin, bin_abs);
 
         {
             char tmp[PATH_MAX] = {0};
@@ -198,7 +198,7 @@ local EXECUTABLE_ENTRY = [[
 
         getcwd(cwd, sizeof(cwd));
 
-        snprintf(interpreter_abs, sizeof(interpreter_abs), "%s/lua", rt_abs);
+        snprintf(interpreter_abs, sizeof(interpreter_abs), "%s/lua", bin_abs);
 
         size_t path_code_length = sizeof("package.path=\"\";package.cpath=\"\";") + sizeof(lua_modules_abs) + sizeof("/?.lua") + sizeof("/?/init.lua")
                                                                                   + sizeof(c_modules_abs) + sizeof("/?.so")
@@ -273,33 +273,37 @@ return function (objs, cmods, out, config)
     local archive = assert(zip.open(path.join(out, "module_archive.zip"), zip.OR(zip.CREATE, zip.EXCL)))
 
     local archive_paths = {
-        base= "modules",
-        lua = "modules/lua",
-        lib = "modules/lib",
-        rt  = "modules/rt",
+        base= "",
+        lua = "lua",
+        lib = "lib",
+        bin = "bin",
     }
 
     for _, dir in pairs(archive_paths) do
         archive:add_dir(dir)
     end
 
-    print("Adding lua modules")
+    print("\x1b[33mAdding lua modules\x1b[0m")
     for _, obj in ipairs(objs) do
-        print("Adding "..obj.name.." to archive as "..path.join(archive_paths.lua, obj.name))
         archive:add(path.join(archive_paths.lua, obj.name), "file", obj.path)
+        print("- \x1b[32m"..obj.name.."\x1b[0m -> \x1b[32m"..path.join(archive_paths.lua, obj.name).."\x1b[0m")
     end
 
-    print("Adding c modules")
+    print("\x1b[33mAdding c modules\x1b[0m")
     for _, cmod in ipairs(cmods) do
-        print("Adding "..cmod.name.." to archive as "..path.join(archive_paths.lib, cmod.name))
         archive:add(path.join(archive_paths.lib, cmod.name), "file", cmod.path)
+        print("- \x1b[32m"..cmod.name.."\x1b[0m -> \x1b[32m"..path.join(archive_paths.lib, cmod.name).."\x1b[0m")
     end
 
-    print("Adding runtime")
-    archive:add(path.join(archive_paths.rt, "lua"), "file", config.lua.interpreter)
-    archive:add(path.join(archive_paths.rt, "liblua.dylib"), "file", config.lua.runtime)
-    archive:add(path.join(archive_paths.rt, "_ENTRYPOINT_"), "string", config.entry)
+    print("\x1b[33mAdding runtime\x1b[0m")
+    archive:add(path.join(archive_paths.bin, "lua"), "file", config.lua.interpreter)
+    print("- \x1b[32mlua\x1b[0m -> \x1b[32m"..path.join(archive_paths.bin, "lua").."\x1b[0m")
+    archive:add(path.join(archive_paths.bin, "liblua.dylib"), "file", config.lua.runtime)
+    print("- \x1b[32mliblua.dylib\x1b[0m -> \x1b[32m"..path.join(archive_paths.bin, "liblua.dylib").."\x1b[0m")
+    archive:add(path.join(archive_paths.bin, "_ENTRYPOINT_"), "string", config.entry)
+    print("- \x1b[32m_ENTRYPOINT_\x1b[0m -> \x1b[32m"..path.join(archive_paths.bin, "_ENTRYPOINT_").."\x1b[0m")
 
+    print("\x1b[33mNote: if you receive a crash here, just run the program again (library issue)\x1b[0m")
     archive:close()
 
 
@@ -308,8 +312,7 @@ return function (objs, cmods, out, config)
     ---@param ... string
     local function compile(code, out, ...)
         local cmd = string.format("%s -x c -c %s -o %s -", config.c_compiler, table.concat({...}, " "), out)
-        print("$ "..cmd)
-        io.flush()
+
         local f = assert(io.popen(cmd, "w"))
         f:write(code)
         f:close()
@@ -320,8 +323,7 @@ return function (objs, cmods, out, config)
     ---@param ... string
     local function link(objs, out, ...)
         local cmd = string.format("%s %s -o %s %s", config.c_compiler, table.concat({...}, " "), out, table.concat(objs, " "))
-        print("$ "..cmd)
-        io.flush()
+
         os.execute(cmd)
     end
 
@@ -343,7 +345,7 @@ return function (objs, cmods, out, config)
         return table.unpack(out)
     end
 
-    print("Compiling module archive")
+    print("\x1b[33mCompiling module archive\x1b[0m")
     local modarch_obj = path.join(out, "module_archive.o")
     compile(utilities.bin2c(file.read(path.join(out, "module_archive.zip")) --[[@as string]], "module_archive"),
             modarch_obj,
@@ -353,13 +355,15 @@ return function (objs, cmods, out, config)
                 "all", "extra", "pedantic", "error"
             }
     )
+    print("- \x1b[32"..modarch_obj.."\x1b[0m")
 
     local libzip_include= execute("pkg-config", "--cflags-only-I", "libzip")()
     local libzip_lib    = execute("pkg-config", "--libs-only-L", "libzip")()
 
     local exentry_obj = path.join(out, "main.o")
     if not path.exists(exentry_obj) then
-        print("Compiling executable entry")
+        -- print("Compiling executable entry")
+        print("\x1b[33mCompiling executable entry\x1b[0m")
         compile(EXECUTABLE_ENTRY, exentry_obj,
             "-Os",
             "-std=c99",
@@ -370,12 +374,15 @@ return function (objs, cmods, out, config)
 
             libzip_include
         )
+        print("- \x1b[32"..exentry_obj.."\x1b[0m")
     end
 
+    print("\x1b[33mLinking executable\x1b[0m")
     link({ modarch_obj, exentry_obj }, path.join(out, path.basename(path.currentdir())),
          "-flto",
          libzip_lib,
          "-lzip"
     )
-    print("Done")
+    print("- \x1b[32"..path.join(out, path.basename(path.currentdir())).."\x1b[0m")
+    print("\x1b[32mDone\x1b[0m")
 end

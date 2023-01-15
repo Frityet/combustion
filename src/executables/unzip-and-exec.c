@@ -24,7 +24,7 @@ extern unsigned char module_archive[];
 extern size_t module_archive_size;
 
 static int execute_lua( const char *entrypoint,
-                        const char *rt, const char *lua_modules, const char *c_modules,
+                        const char *bin, const char *lua_modules, const char *c_modules,
                         int argc, const char *argv[static argc]);
 
 /* recursive mkdir */
@@ -152,7 +152,7 @@ int main(int argc, const char *argv[])
     zip_source_close(src);
 
     char entrypoint_def_path[PATH_MAX] = {0};
-    snprintf(entrypoint_def_path, sizeof(entrypoint_def_path), "%s/modules/rt/_ENTRYPOINT_", td);
+    snprintf(entrypoint_def_path, sizeof(entrypoint_def_path), "%s/bin/_ENTRYPOINT_", td);
 
     char entrypoint[PATH_MAX] = {0};
     FILE *f = fopen(entrypoint_def_path, "rb");
@@ -164,25 +164,25 @@ int main(int argc, const char *argv[])
     fread(entrypoint, 1, sizeof(entrypoint), f);
     fclose(f);
 
-    char rt_tmp[PATH_MAX] = {0}, lua_tmp[PATH_MAX] = {0}, lib_tmp[PATH_MAX] = {0};
+    char bin_tmp[PATH_MAX] = {0}, lua_tmp[PATH_MAX] = {0}, lib_tmp[PATH_MAX] = {0};
 
-    snprintf(rt_tmp, sizeof(rt_tmp), "%s/modules/rt/", td);
-    snprintf(lua_tmp, sizeof(lua_tmp), "%s/modules/lua/", td);
-    snprintf(lib_tmp, sizeof(lib_tmp), "%s/modules/lib/", td);
+    snprintf(bin_tmp, sizeof(bin_tmp), "%s/bin/", td);
+    snprintf(lua_tmp, sizeof(lua_tmp), "%s/lua/", td);
+    snprintf(lib_tmp, sizeof(lib_tmp), "%s/lib/", td);
 
-    return execute_lua(entrypoint, rt_tmp, lua_tmp, lib_tmp, argc, argv);
+    return execute_lua(entrypoint, bin_tmp, lua_tmp, lib_tmp, argc, argv);
 }
 
 static int execute_lua( const char *entrypoint,
-                        const char *rt, const char *lua_modules, const char *c_modules,
+                        const char *bin, const char *lua_modules, const char *c_modules,
                         int argc, const char *argv[static argc])
 {
-    char    lua_modules_abs[PATH_MAX] = {0}, c_modules_abs[PATH_MAX] = {0}, rt_abs[PATH_MAX] = {0}, entrypoint_abs[PATH_MAX] = {0},
+    char    lua_modules_abs[PATH_MAX] = {0}, c_modules_abs[PATH_MAX] = {0}, bin_abs[PATH_MAX] = {0}, entrypoint_abs[PATH_MAX] = {0},
             cwd[PATH_MAX] = {0}, interpreter_abs[PATH_MAX] = {0};
 
     realpath(lua_modules, lua_modules_abs);
     realpath(c_modules, c_modules_abs);
-    realpath(rt, rt_abs);
+    realpath(bin, bin_abs);
 
     {
         char tmp[PATH_MAX] = {0};
@@ -192,7 +192,7 @@ static int execute_lua( const char *entrypoint,
 
     getcwd(cwd, sizeof(cwd));
 
-    snprintf(interpreter_abs, sizeof(interpreter_abs), "%s/lua", rt_abs);
+    snprintf(interpreter_abs, sizeof(interpreter_abs), "%s/lua", bin_abs);
 
     size_t path_code_length = sizeof("package.path=\"\";package.cpath=\"\";") + sizeof(lua_modules_abs) + sizeof("/?.lua") + sizeof("/?/init.lua")
                                                                               + sizeof(c_modules_abs) + sizeof("/?.so")
