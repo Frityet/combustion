@@ -16,6 +16,7 @@ if not path.exists("combust-config.lua") then error("Config file not found in di
 ---@field cpath string[]
 ---@field lua { version: string, interpreter: string, compiler: string, runtime: string }
 ---@field c_compiler string
+---@field libzip_dir string
 ---@field output_format string
 local config = assert(dofile("combust-config.lua"))
 

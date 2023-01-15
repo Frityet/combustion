@@ -369,7 +369,7 @@ return function (objs, cmods, out, config)
                 "all", "extra", "pedantic", "error"
             },
 
-            execute("pkg-config", "--cflags-only-I", "libzip")()
+            "-I"..path.join(config.libzip_dir, "include")
         )
         print("- \x1b[32"..exentry_obj.."\x1b[0m")
     end
@@ -377,7 +377,7 @@ return function (objs, cmods, out, config)
     print("\x1b[33mLinking executable\x1b[0m")
     link({ modarch_obj, exentry_obj }, path.join(out, "bin", path.basename(path.currentdir())),
          "-flto",
-         execute("pkg-config", "--libs-only-L", "libzip")(),
+         "-L"..path.join(config.libzip_dir, "lib"),
          "-lzip"
     )
     print("- \x1b[32"..path.join(out, path.basename(path.currentdir())).."\x1b[0m")
