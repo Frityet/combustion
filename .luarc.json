@@ -20,18 +20,17 @@
     "runtime.path": [
         "src/?.lua",
         "src/?/init.lua",
-        "lua_modules/share/lua/5.4/?.lua",
-        "lua_modules/share/lua/5.4/?/init.lua"
+        "lua_modules/share/lua/5.1/?.lua",
+        "lua_modules/share/lua/5.1/?/init.lua"
     ],
     "runtime.pathStrict": true,
     "runtime.version": "LuaJIT",
     "workspace.ignoreDir": [
-        ".vscode",
-        "lua_modules/share/lua/5.4/couchmc"
+        ".vscode"
     ],
     "workspace.library": [
-        "lua_modules/lib/lua/5.4/",
-        "lua_modules/share/lua/5.4/",
+        "lua_modules/lib/lua/5.1/",
+        "lua_modules/share/lua/5.1/",
         "${3rd}/lfs/library"
     ],
     "workspace.useGitIgnore": false

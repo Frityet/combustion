@@ -268,13 +268,13 @@ end
 ---@param out string
 ---@param config Config
 return function (objs, cmods, out, config)
-    file.delete(path.join(out, "module_archive.zip"))
+    local arpath = os.tmpname()
+    file.delete(path.join(out, arpath))
 
     print("\x1b[33mCreating archive\x1b[0m")
-    local archive = assert(zip.open(path.join(out, "module_archive.zip"), zip.OR(zip.CREATE, zip.EXCL)))
+    local archive = assert(zip.open(path.join(out, arpath), zip.CREATE))
 
     local archive_paths = {
-        base= "",
         lua = "lua",
         lib = "lib",
         bin = "bin",
@@ -304,7 +304,6 @@ return function (objs, cmods, out, config)
     archive:add(path.join(archive_paths.bin, "_ENTRYPOINT_"), "string", config.entry)
     print("- \x1b[32mCompressed\x1b[0m _ENTRYPOINT_")
 
-    print("\x1b[33mNote: if you receive a crash here, just run the program again (library issue)\x1b[0m")
     archive:close()
 
 
@@ -348,7 +347,7 @@ return function (objs, cmods, out, config)
 
     print("\x1b[33mCompiling module archive\x1b[0m")
     local modarch_obj = path.join(out, "module_archive.o")
-    compile(utilities.bin2c(file.read(path.join(out, "module_archive.zip")) --[[@as string]], "module_archive"),
+    compile(utilities.bin2c(file.read(arpath) --[[@as string]], "module_archive"),
             modarch_obj,
 
             "-Os", "-std=c99",
@@ -358,12 +357,9 @@ return function (objs, cmods, out, config)
     )
     print("- \x1b[32"..modarch_obj.."\x1b[0m")
 
-    local libzip_include= execute("pkg-config", "--cflags-only-I", "libzip")()
-    local libzip_lib    = execute("pkg-config", "--libs-only-L", "libzip")()
 
     local exentry_obj = path.join(out, "main.o")
     if not path.exists(exentry_obj) then
-        -- print("Compiling executable entry")
         print("\x1b[33mCompiling executable entry\x1b[0m")
         compile(EXECUTABLE_ENTRY, exentry_obj,
             "-Os",
@@ -373,7 +369,7 @@ return function (objs, cmods, out, config)
                 "all", "extra", "pedantic", "error"
             },
 
-            libzip_include
+            execute("pkg-config", "--cflags-only-I", "libzip")()
         )
         print("- \x1b[32"..exentry_obj.."\x1b[0m")
     end
@@ -381,7 +377,7 @@ return function (objs, cmods, out, config)
     print("\x1b[33mLinking executable\x1b[0m")
     link({ modarch_obj, exentry_obj }, path.join(out, path.basename(path.currentdir())),
          "-flto",
-         libzip_lib,
+         execute("pkg-config", "--libs-only-L", "libzip")(),
          "-lzip"
     )
     print("- \x1b[32"..path.join(out, path.basename(path.currentdir())).."\x1b[0m")

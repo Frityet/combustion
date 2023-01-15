@@ -53,7 +53,7 @@ return {
     lua = {
         version     = "5.4",
         interpreter = lua_basedir.."/bin/lua5.4",
-        compiler    = lua_basedir.."/bin/luac5.4",
+        compiler    = lua_basedir.."/bin/luac5.4 -s -o $(output) $(input)",
 
         --If OS is linux, use .so, otherwise use .dylib
         runtime     = lua_basedir..(os == "Darwin" and "/lib/liblua5.4.dylib" or "/lib/liblua5.4.so"),
