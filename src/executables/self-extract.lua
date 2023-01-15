@@ -309,6 +309,7 @@ return function (objs, cmods, out, config)
     local function compile(code, out, ...)
         local cmd = string.format("%s -x c -c %s -o %s -", config.c_compiler, table.concat({...}, " "), out)
         print("$ "..cmd)
+        io.flush()
         local f = assert(io.popen(cmd, "w"))
         f:write(code)
         f:close()
@@ -320,6 +321,7 @@ return function (objs, cmods, out, config)
     local function link(objs, out, ...)
         local cmd = string.format("%s %s -o %s %s", config.c_compiler, table.concat({...}, " "), out, table.concat(objs, " "))
         print("$ "..cmd)
+        io.flush()
         os.execute(cmd)
     end
 
@@ -359,8 +361,7 @@ return function (objs, cmods, out, config)
     if not path.exists(exentry_obj) then
         print("Compiling executable entry")
         compile(EXECUTABLE_ENTRY, exentry_obj,
-            "-fsanitize=address", "-fsanitize=undefined",
-            "-O0", "-g",
+            "-Os",
             "-std=c99",
 
             warning {
@@ -372,8 +373,7 @@ return function (objs, cmods, out, config)
     end
 
     link({ modarch_obj, exentry_obj }, path.join(out, path.basename(path.currentdir())),
-         "-fsanitize=address", "-fsanitize=undefined",
-
+         "-flto",
          libzip_lib,
          "-lzip"
     )
