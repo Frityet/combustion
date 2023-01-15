@@ -206,6 +206,24 @@ local EXECUTABLE_ENTRY = [[
     }
 ]]
 
+---@param prog string
+---@param ... string
+---@return fun(): string
+local function execute(prog, ...)
+    local args = {...}
+    local proc = assert(io.popen(prog.." "..table.concat(args, ' '), "r"))
+
+    return coroutine.wrap(function ()
+        local out = ""
+        for line in proc:lines() do
+            out = out..line.."\n"
+            coroutine.yield(line)
+        end
+
+        return out, proc:close()
+    end)
+end
+
 ---Self-extracting executable that extracts the required modules to a temporary directory and executes the main program
 ---@param objs Module[]
 ---@param cmods Module[]
@@ -295,20 +313,25 @@ return function (objs, cmods, out, config)
             }
     )
 
-    print("Compiling executable entry")
+    local libzip_include= execute("pkg-config", "--cflags-only-I", "libzip")()
+    local libzip_lib    = execute("pkg-config", "--libs-only-L", "libzip")()
+
     local exentry_obj = path.join(out, "main.o")
-    compile(EXECUTABLE_ENTRY, exentry_obj,
+    if not path.exists(exentry_obj) then
+        print("Compiling executable entry")
+        compile(EXECUTABLE_ENTRY, exentry_obj,
             "-Os", "-std=c99",
 
             warning {
                 "all", "extra", "pedantic", "error"
             },
 
-            "-I/usr/local/include"
-    )
+            libzip_include
+        )
+    end
 
     link({ modarch_obj, exentry_obj }, path.join(out, path.basename(path.currentdir())),
-         "-L/usr/local/lib",
+         libzip_lib,
          "-lzip")
     print("Done")
 end
