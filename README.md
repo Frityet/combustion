@@ -93,3 +93,7 @@ It also packs in C .dylib/.so/.dll dependencies, if the directory that contains 
 ## Installation
 
 `luarocks install --server=https://luarocks.org/dev combustion`
+
+## Todo
+- [ ] #1
+- [ ] #2
