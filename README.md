@@ -29,10 +29,9 @@ It also packs in C .dylib/.so/.dll dependencies, if the directory that contains 
 >     end)
 > end
 >
-> local lua_basedir, ok = execute("pkg-config", "luajit", "--libs-only-L")():match("%-L(.*)"):gsub("/lib$", "/")
-> if not ok then
->     error("Could not find LuaJIT")
-> end
+> local prefix = os.getenv("PREFIX") or "/usr/local"
+> local libzip_basedir = os.getenv("LIBZIP_DIR") or prefix
+> local lua_basedir = os.getenv("LUA_DIR") or prefix
 >
 > local osname = execute("uname")():gsub("\n", "")
 >
@@ -64,13 +63,37 @@ It also packs in C .dylib/.so/.dll dependencies, if the directory that contains 
 >         runtime     = lua_basedir..(osname == "Darwin" and "/lib/libluajit.dylib" or "/lib/libluajit.so"),
 >     },
 >
->     --C compiler to use, will be executed
->     c_compiler = os.getenv("CC") or "cc",
+>     c = {
+>         compiler = os.getenv("CC") or "cc",
+>
+>         --Additional flags to pass to the compiler
+>         flags = {
+>
+>         },
+>
+>         linker = os.getenv("CC") or "cc",
+>
+>         --Additional flags to pass to the linker
+>         ldflags = {
+>             "-flto"
+>         }
+>     },
+>
+>     -- --Path to libzip
+>     -- --the directory specified must contain `lib` which contains `libzip.a`
+>     -- --(or `libzip.so`, but that means that libzip would have to be installed on the user's machine for the generated executable to work)
+>     -- --and `include` which contains `zip.h`
+>     -- libzip_dir = execute("pkg-config", "libzip", "--libs-only-L")():match("%-L(.*)"):gsub("/lib$", "/"),
+>
+>     libzip = {
+>         include = (libzip_basedir or prefix).."/include",
+>         lib     = (libzip_basedir or prefix).."/lib",
+>
+>
+>     },
 >
 >     output_format = "self-extract"
 > }
 > ```
 
-- Run `combust` in the root of your project, and wait for it to build
-
-Currently, you must also have `libzip` installed for `combust`, and the resulting binary, to work
+- Run `combust` in the root of your project, and wait for it to build into `build/bin`
