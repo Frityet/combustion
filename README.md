@@ -1,7 +1,7 @@
-# Combustion - Compile lua projects into a single binary
+# Combustion - Compile Lua projects into a single binary
 
 Combustion is a tool for compiling Lua projects into a single binary.
-Combustion works with *any* interpereter and language version, as long as the interpreter supports the `-e` flag
+Combustion works with *any* interpreter and language version, as long as the interpreter supports the `-e` flag
 It also packs in C .dylib/.so/.dll dependencies, if the directory that contains them is specified in the combust-config
 
 ## Usage
@@ -79,21 +79,13 @@ It also packs in C .dylib/.so/.dll dependencies, if the directory that contains 
 >         }
 >     },
 >
->     -- --Path to libzip
->     -- --the directory specified must contain `lib` which contains `libzip.a`
->     -- --(or `libzip.so`, but that means that libzip would have to be installed on the user's machine for the generated executable to work)
->     -- --and `include` which contains `zip.h`
->     -- libzip_dir = execute("pkg-config", "libzip", "--libs-only-L")():match("%-L(.*)"):gsub("/lib$", "/"),
->
 >     libzip = {
 >         include = (libzip_basedir or prefix).."/include",
 >         lib     = (libzip_basedir or prefix).."/lib",
->
->
 >     },
 >
 >     output_format = "self-extract"
 > }
 > ```
 
-- Run `combust` in the root of your project, and wait for it to build into `build/bin`
+- Run `combust` in the root of your project and wait for it to build into `build/bin`
