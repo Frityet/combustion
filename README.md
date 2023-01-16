@@ -95,5 +95,5 @@ It also packs in C .dylib/.so/.dll dependencies, if the directory that contains 
 `luarocks install --server=https://luarocks.org/dev combustion`
 
 ## Todo
-- [ ] #1
-- [ ] #2
+- [ ] [Win32 support](https://github.com/Frityet/combustion/issues/1)
+- [ ] [Package executable format](https://github.com/Frityet/combustion/issues/2)
