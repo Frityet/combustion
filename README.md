@@ -89,3 +89,7 @@ It also packs in C .dylib/.so/.dll dependencies, if the directory that contains 
 > ```
 
 - Run `combust` in the root of your project and wait for it to build into `build/bin`
+
+## Installation
+
+`luarocks install --server=https://luarocks.org/dev combustion`

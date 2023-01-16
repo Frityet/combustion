@@ -4,7 +4,6 @@ local file = require("pl.file")
 local utilities = require("utilities")
 
 local EXECUTABLE_ENTRY = [[
-    #if !defined(_WIN32)
     #include <zip.h>
     #include <stdlib.h>
     #include <stdio.h>
@@ -237,10 +236,6 @@ local EXECUTABLE_ENTRY = [[
 
         return err;
     }
-
-    #else
-
-    #endif
 
 ]]
 

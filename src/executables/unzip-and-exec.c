@@ -1,4 +1,3 @@
-#if !defined(_WIN32)
 #include <zip.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -231,7 +230,3 @@ static int execute_lua( const char *entrypoint,
 
     return err;
 }
-
-#else
-
-#endif
