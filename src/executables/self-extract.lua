@@ -239,24 +239,6 @@ local EXECUTABLE_ENTRY = [[
 
 ]]
 
----@param prog string
----@param ... string
----@return fun(): string
-local function execute(prog, ...)
-    local args = {...}
-    local proc = assert(io.popen(prog.." "..table.concat(args, ' '), "r"))
-
-    return coroutine.wrap(function ()
-        local out = ""
-        for line in proc:lines() do
-            out = out..line.."\n"
-            coroutine.yield(line)
-        end
-
-        return out, proc:close()
-    end)
-end
-
 ---Self-extracting executable that extracts the required modules to a temporary directory and executes the main program
 ---@param objs Module[]
 ---@param cmods Module[]

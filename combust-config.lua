@@ -76,9 +76,15 @@ return {
     libzip = {
         include = (libzip_basedir or prefix).."/include",
         lib     = (libzip_basedir or prefix).."/lib",
-
-
     },
 
-    output_format = "self-extract"
+    output_format = "package",
+
+    app_info = {
+        name = "combust",
+        version = "0.1.0",
+        identifier = "net.frityet.combust",
+        icon = nil,
+
+    }
 }

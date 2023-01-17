@@ -8,25 +8,28 @@ local function bin2c_jit(data, symname)
     local ffi = require("ffi")
 
     local bufsiz = (#data * 8) + #("#include <stddef.h>\n\nconst unsigned char "..symname.."[] = {\n};\nconst size_t "..symname.."_size = "..#data..";\n")
-    --Each hex byte is 4 characters, plus a comma, plus a newline every 16 bytes, plus the header and footer
+
+    ---Preallocate enough storage for the output
     local buf = ffi.new("unsigned char [?]", bufsiz)
     local writtenc = 0
-    local function concat(str)
-        ffi.copy((buf + writtenc) --[[@as ffi.cdata*]], str)
-        writtenc = writtenc + #str
+
+    ---@param buf ffi.cdata*
+    ---@param str string
+    ---@param wc integer
+    ---@return integer
+    local function concat(buf, str, wc)
+        ffi.copy((buf + wc) --[[@as ffi.cdata*]], str)
+        return wc + #str
     end
 
-    concat("#include <stddef.h>\n\nconst unsigned char "..symname.."[] = {\n")
+    writtenc = concat(buf, "#include <stddef.h>\n\nconst unsigned char "..symname.."[] = {\n", writtenc)
 
     for i = 1, #data do
-        concat(string.format("0x%02x,", string.byte(data, i)))
-        if i % 16 == 0 then
-            concat("\n")
-        end
+        writtenc = concat(buf, string.format("0x%02x,", string.byte(data, i)), writtenc)
     end
 
 
-    concat("\n};\nconst size_t "..symname.."_size = "..#data..";\n")
+    writtenc = concat(buf, "\n};\nconst size_t "..symname.."_size = "..#data..";\n", writtenc)
 
     return ffi.string(buf, writtenc)
 end
@@ -56,6 +59,26 @@ function export.bin2c(data, symname)
     io.write("\x1b[?25h")
     out = out.."\n};\n"
     return out.."const size_t "..symname.."_size = "..#data..";\n"
+end
+
+---@return 'windows' | 'linux' | 'osx' | 'unknown'
+function export.platform()
+
+    if jit then
+        return jit.os:lower()
+    else
+        ---@type string
+        local uname = io.popen("uname"):read("*a"):gsub("\n", "")
+        if uname:find("Darwin") then
+            return "osx"
+        elseif uname:find("Linux") then
+            return "linux"
+        elseif uname:find("Windows") then
+            return "windows"
+        end
+    end
+
+    return "unknown"
 end
 
 return export
