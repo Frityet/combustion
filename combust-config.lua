@@ -78,7 +78,7 @@ return {
         lib     = (libzip_basedir or prefix).."/lib",
     },
 
-    output_format = "package",
+    output_format = "self-extract",
 
     app_info = {
         name = "combust",
