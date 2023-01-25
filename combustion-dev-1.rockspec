@@ -1,7 +1,7 @@
 package = "combustion"
 version = "dev-1"
 source = {
-    url = "https://github.com/Frityet/combustion.git"
+    url = "git://https://github.com/Frityet/combustion"
 }
 description = {
     homepage = "https://github.com/Frityet/combustion",
