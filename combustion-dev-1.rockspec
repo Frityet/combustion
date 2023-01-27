@@ -4,6 +4,13 @@ source = {
     url = "git://github.com/Frityet/combustion"
 }
 description = {
+    summary = "Tool to pack any lua project (including dependencies) into a single executable",
+    detailed = [[
+        Combustion is a tool to pack any lua project (including dependencies) into a single executable.
+        It can be used to create a single executable for your lua project, or to create a self-extracting archive.
+
+        Just define a `combust-config.lua` in the root of your project (example in repo) and run the combust executable!
+    ]],
     homepage = "https://github.com/Frityet/combustion",
     license = "MIT/X11"
 }
