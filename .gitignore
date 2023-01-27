@@ -4,6 +4,7 @@ lua_modules/
 .luarocks/
 lsp/
 build/
+combust-out/
 .cache/
 .idea/
 /luarocks
