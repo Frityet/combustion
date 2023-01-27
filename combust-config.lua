@@ -28,6 +28,8 @@ return {
     --The entry script of the program, must be relative to the values in `path`
     entry = "main.lua",
 
+    build_directory = "combust-out",
+
     --Lua module search paths, will recursively search for .lua files
     path = {
         "lua_modules/share/lua/5.1/",
@@ -85,6 +87,5 @@ return {
         version = "0.1.0",
         identifier = "net.frityet.combust",
         icon = nil,
-
     }
 }

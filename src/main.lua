@@ -12,6 +12,7 @@ if not path.exists("combust-config.lua") then error("Config file not found in di
 
 ---@class Config
 ---@field entry string
+---@field build_directory string
 ---@field path string[]
 ---@field cpath string[]
 ---@field lua { version: string, interpreter: string, compiler: string, runtime: string }
@@ -56,11 +57,11 @@ for _, dir in ipairs(config.cpath) do
 end
 
 local build_directories = {
-    base    = "build",
-    obj     = "build/obj",
-    dylib   = "build/dylib",
-    bin     = "build/bin",
+    base    = config.build_directory or "build",
 }
+build_directories.obj = path.join(build_directories.base, "obj")
+build_directories.lib = path.join(build_directories.base, "lib")
+build_directories.bin = path.join(build_directories.base, "bin")
 
 path.rmdir(build_directories.base)
 
@@ -93,8 +94,8 @@ end
 
 print("\x1b[33mCopying C modules...\x1b[0m")
 for _, cfile in ipairs(c_modules) do
-    local outp, outf = path.join(build_directories.dylib,path.dirname(cfile.name)),
-                                 path.join(build_directories.dylib, cfile.name)
+    local outp, outf = path.join(build_directories.lib,path.dirname(cfile.name)),
+                                 path.join(build_directories.lib, cfile.name)
     dir.makepath(outp)
     file.copy(cfile.path, outf)
     table.insert(c_mods, { name = cfile.name, path = outf })
