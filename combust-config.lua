@@ -17,7 +17,7 @@ local function execute(prog, ...)
     end)
 end
 
-local prefix = os.getenv("PREFIX") or "/usr/local"
+local prefix = os.getenv("PREFIX") or "/usr"
 local libzip_basedir = os.getenv("LIBZIP_DIR") or prefix
 local lua_basedir = os.getenv("LUA_DIR") or prefix
 
@@ -50,7 +50,7 @@ return {
         compiler    = lua_basedir.."/bin/luajit -b -s -t raw $(input) $(output)",
 
         --liblua, libluajit, etc
-        runtime     = lua_basedir..(osname == "Darwin" and "/lib/libluajit.dylib" or "/lib/libluajit.so"),
+        runtime     = lua_basedir..(osname == "Darwin" and "/lib/libluajit.dylib" or "/lib/libluajit-5.1.so"),
     },
 
     c = {

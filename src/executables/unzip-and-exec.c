@@ -4,7 +4,12 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <limits.h>
+
+#if defined(__linux__)
+#	include<linux/limits.h>
+#else
+#	include <limits.h>
+#endif
 #include <stdarg.h>
 #include <libgen.h>
 extern int errno;
