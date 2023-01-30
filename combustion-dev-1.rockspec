@@ -38,8 +38,6 @@ build = {
         ["executables.package.linux"] = "src/executables/package/linux.lua",
         ["executables.package.windows"] = "src/executables/package/windows.lua",
 
-
-
         ["utilities"] = "src/utilities.lua"
     }
 }

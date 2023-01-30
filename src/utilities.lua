@@ -61,7 +61,9 @@ function export.bin2c(data, symname)
     return out.."const size_t "..symname.."_size = "..#data..";\n"
 end
 
----@return 'windows' | 'linux' | 'osx' | 'unknown'
+---@alias Platform 'windows' | 'linux' | 'osx' | 'unknown'
+
+---@return Platform
 function export.platform()
 
     if jit then
