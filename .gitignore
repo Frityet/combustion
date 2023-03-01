@@ -11,5 +11,6 @@ combust-out/
 /lua
 /lua_modules
 /.luarocks
+build/
 
 **/.DS_Store

@@ -1,139 +1,160 @@
-local file = require("pl.file")
-local dir = require("pl.dir")
-local path = require("pl.path")
----@type LuaFileSystem
-local lfs = require("lfs")
+-- Copyright (c) 2023 Amrit Bhogal
+--
+-- This software is released under the MIT License.
+-- https://opensource.org/licenses/MIT
 
+---@alias DownloadOptions "cache"|"nocache"
+---Command line arguments
+---@class Combustion.Options
+---@field type "self-extract"|"app"|"directory"
+---@field output_dir string
+---@field sources string[]
+---@field library_dir string[]
+---@field lua string?
+---@field luac string?
+---@field entry string
+---@field name string
+---@field c_compiler string
+---@field linker string
+---@field download_cc DownloadOptions
+---@field download_lua DownloadOptions
+---@field verbose boolean
+
+
+---@type argparse
+local argparse = require("argparse")
+local pretty = require("pl.pretty")
+
+local utilities = require("utilities")
+local compile = require("compile")
 local executables = require("executables")
 
-local CURRENT_DIR = path.currentdir()
+local lprint, lerror = print, error
 
-if not path.exists("combust-config.lua") then error("Config file not found in directory "..CURRENT_DIR) end
 
----@class Config
----@field entry string
----@field build_directory string
----@field path string[]
----@field cpath string[]
----@field lua { version: string, interpreter: string, compiler: string, runtime: string }
----@field c { compiler: string, flags: string[], linker: string, ldflags: string[] }
----@field libzip { include: string, lib: string }
----@field output_format string
-local config = assert(dofile("combust-config.lua"))
-
----@alias Module { name: string, path: string }
-
----@type Module[], Module[]
-local lua_modules, c_modules = {}, {}
-
----@param dir string
----@param ext string
----@param list Module[]
----@param base string?
-local function recursive_add_files(dir, ext, list, base)
-    for file in lfs.dir(dir) do
-        if file == "." or file == ".." then goto next end
-        local rel_path = path.join(dir, file)
-        local abs_path = path.abspath(rel_path)
-        if path.isfile(abs_path) and path.extension(abs_path) == ext then
-            print("- \x1b[32mFound\x1b[0m "..rel_path)
-            table.insert(list, { name = path.join(base or "", file), path = abs_path })
-        elseif path.isdir(abs_path) then
-            recursive_add_files(rel_path, ext, list, path.join(base or "", file))
-        end
-
-        ::next::
-    end
+---Regular print can't print tables, and pprint has quotations around strings, so this is the best solution
+---@param ... any
+function print(...)
+    local a = {...}
+    if #a < 1 then return
+    elseif #a == 1 then
+        if type(a[1]) ~= "table" then lprint(tostring(a[1])) else print(pretty.write(a[1])) end
+    else print(pretty.write(a)) end
 end
 
-print("\x1b[33mFinding lua modules...\x1b[0m")
-for _, dir in ipairs(config.path) do
-    recursive_add_files(dir, ".lua", lua_modules)
+function error(msg, i)
+    if type(msg) == "table" then msg = pretty.write(msg)
+    elseif type(msg) ~= "string" then msg = tostring(msg) end
+    return lerror("\n\x1b[31m"..msg.."\x1b[0m", i)
 end
 
-print("\x1b[33mFinding native modules...\x1b[0m")
-for _, dir in ipairs(config.cpath) do
-    recursive_add_files(dir, ".so", c_modules)
+local function warning(msg)
+    if type(msg) == "table" then msg = pretty.write(msg)
+    elseif type(msg) ~= "string" then msg = tostring(msg) end
+    return lprint("\n\x1b[33m"..msg.."\x1b[0m")
 end
 
-local build_directories = {
-    base    = config.build_directory or "build",
+local parser = argparse() {
+    name = "combust",
+    description = "Pack your lua project, and all dependencies into a single self contained file.",
+    epilog = "https://github.com/Frityet/combustion"
 }
-build_directories.obj = path.join(build_directories.base, "obj")
-build_directories.lib = path.join(build_directories.base, "lib")
-build_directories.bin = path.join(build_directories.base, "bin")
 
-path.rmdir(build_directories.base)
+parser:add_complete()
 
-for _, dir in pairs(build_directories) do
-    path.mkdir(dir)
+parser:argument("type", "The type of project to pack.")
+        :args(1)
+        :choices {
+            "self-extract",
+            "app",
+            "directory"
+        }
+        :default "self-extract"
+
+--Options
+parser:option("-o --output-dir", "The output directory to write to.")
+        :args(1)
+        :default "build"
+
+parser:option("-s --sources", "The source directory to pack.")
+        :args "+"
+        :default "."
+
+parser:option("-L --library-dir", "Location of C libraries")
+        :args "+"
+
+parser:option("-r --resources", "Additional resources to pack.")
+        :args "+"
+
+parser:option("--lua", "Path to the lua executable")
+        :args(1)
+        :default(utilities.find_lua().interpreter)
+
+parser:option("--luac", "Path to the lua compiler, must be compatable with the lua executable.")
+        :args(1)
+        :default(utilities.find_lua().compiler)
+
+parser:option("--c-compiler", "C compiler to use.")
+        :args(1)
+        :default((function ()
+            local cc = os.getenv("CC")
+            if not cc then
+                local cc, err = utilities.find_executable("cc")
+                if not cc then
+                    for _, name in ipairs { "gcc", "clang" } do
+                        cc, err = utilities.find_executable(name)
+                        if cc then break end
+                    end
+                end
+            end
+
+            return cc
+        end)())
+
+parser:option("--linker", "Linker to use.")
+        :args(1)
+        :default "<C Compiler>"
+
+parser:option("-e --entry", "The entry point of the project.")
+        :args(1)
+        :default "main.lua"
+
+parser:option("-n --name", "The name of the project.")
+        :args(1)
+        :default "combust"
+
+parser:option("--download-lua", "Downloads lua based off --lua-version")
+        :args(1)
+        :choices {
+            "no-cache",
+            "cache",
+        }
+        :default "cache"
+
+parser:option("--download-cc", "Downloads tcc for compiling the loader")
+        :args(1)
+        :choices {
+            "no-cache",
+            "cache",
+        }
+        :default "cache"
+
+
+parser:flag("-v --verbose", "Print verbose output.")
+        :default(false)
+
+---@type Combustion.Options
+local cli_opts = parser:parse()
+
+local opts, err = compile(cli_opts)
+if not opts then error(err) end
+
+if cli_opts.verbose then
+    print("Options:")
+    print(opts)
 end
 
----@param module Module
----@return Module
-local function compile(module)
-    local outp, outf = path.join(build_directories.obj,path.dirname(module.name)),
-                                 path.join(build_directories.obj, module.name)
-    dir.makepath(outp)
+local success, err = executables[cli_opts.type](opts)
+if not success then error(err) end
 
-    local cmd = config.lua.compiler:gsub("%$%((input)%)", module.path)
-    cmd = cmd:gsub("%$%((output)%)", outf)
-
-    os.execute(cmd)
-
-    return { name = module.name, path = outf }
-end
-
----@type Module[], Module[]
-local luac_mods, c_mods = {}, {}
-print("\x1b[33mCompiling Lua modules...\x1b[0m")
-for _, luafile in ipairs(lua_modules) do
-    table.insert(luac_mods, compile(luafile))
-    print("- \x1b[32mCompiled\x1b[0m "..luafile.name.."")
-end
-
-print("\x1b[33mCopying C modules...\x1b[0m")
-for _, cfile in ipairs(c_modules) do
-    local outp, outf = path.join(build_directories.lib,path.dirname(cfile.name)),
-                                 path.join(build_directories.lib, cfile.name)
-    dir.makepath(outp)
-    file.copy(cfile.path, outf)
-    table.insert(c_mods, { name = cfile.name, path = outf })
-    print("- \x1b[32mCopied\x1b[0m "..cfile.name.."")
-end
-
-local entry do
-    for _, mod in ipairs(luac_mods) do
-        if mod.name == config.entry then
-            entry = mod
-            break
-        end
-    end
-
-    if not entry then error("Entry point not found in compiled files") end
-end
-
---Remove duplicate modules
-local function remove_duplicates(mods)
-    local names = {}
-    local new = {}
-    for _, mod in ipairs(mods) do
-        if not names[mod.name] then
-            table.insert(new, mod)
-            names[mod.name] = true
-        end
-    end
-    return new
-end
-
-luac_mods = remove_duplicates(luac_mods)
-c_mods = remove_duplicates(c_mods)
-
-print("\x1b[33mBuilding executable...\x1b[0m")
-print("- \x1b[33mUsing\x1b[0m \x1b[35m"..config.output_format.."\x1b[0m")
-
-local lprint = print
-function print(...) return lprint("[\x1b[34m"..config.output_format.." build\x1b[0m]", ...) end
-executables[config.output_format](luac_mods, c_mods, build_directories.base, config)
-print = lprint
-print("\x1b[32mDone\x1b[0m")
+print("\x1b[32mSuccess!\x1b[0m")
