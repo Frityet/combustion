@@ -3,21 +3,20 @@
 -- This software is released under the MIT License.
 -- https://opensource.org/licenses/MIT
 
----@alias DownloadOptions "cache"|"nocache"
+
 ---Command line arguments
 ---@class Combustion.Options
 ---@field type "self-extract"|"app"|"directory"
 ---@field output_dir string
----@field sources string[]
----@field library_dir string[]
+---@field source_dirs string[]
+---@field library_dirs string[]
+---@field resources_dirs string[]
 ---@field lua string?
 ---@field luac string?
 ---@field entry string
 ---@field name string
 ---@field c_compiler string
 ---@field linker string
----@field download_cc DownloadOptions
----@field download_lua DownloadOptions
 ---@field verbose boolean
 
 
@@ -48,7 +47,8 @@ function error(msg, i)
     return lerror("\n\x1b[31m"..msg.."\x1b[0m", i)
 end
 
-local function warning(msg)
+---@diagnostic disable-next-line: lowercase-global
+function warning(msg)
     if type(msg) == "table" then msg = pretty.write(msg)
     elseif type(msg) ~= "string" then msg = tostring(msg) end
     return lprint("\n\x1b[33m"..msg.."\x1b[0m")
@@ -76,14 +76,14 @@ parser:option("-o --output-dir", "The output directory to write to.")
         :args(1)
         :default "build"
 
-parser:option("-s --sources", "The source directory to pack.")
+parser:option("-S --source-dirs", "The source directory to pack.")
         :args "+"
         :default "."
 
-parser:option("-L --library-dir", "Location of C libraries")
+parser:option("-L --library-dirs", "Location of C libraries")
         :args "+"
 
-parser:option("-r --resources", "Additional resources to pack.")
+parser:option("-R --resource-dirs", "Additional resources to pack.")
         :args "+"
 
 parser:option("--lua", "Path to the lua executable")
@@ -108,12 +108,15 @@ parser:option("--c-compiler", "C compiler to use.")
                 end
             end
 
+            if not cc then
+                warning("No C compiler found. Some features may not work.")
+            end
+
             return cc
         end)())
 
 parser:option("--linker", "Linker to use.")
         :args(1)
-        :default "<C Compiler>"
 
 parser:option("-e --entry", "The entry point of the project.")
         :args(1)
@@ -123,38 +126,19 @@ parser:option("-n --name", "The name of the project.")
         :args(1)
         :default "combust"
 
-parser:option("--download-lua", "Downloads lua based off --lua-version")
-        :args(1)
-        :choices {
-            "no-cache",
-            "cache",
-        }
-        :default "cache"
-
-parser:option("--download-cc", "Downloads tcc for compiling the loader")
-        :args(1)
-        :choices {
-            "no-cache",
-            "cache",
-        }
-        :default "cache"
-
-
 parser:flag("-v --verbose", "Print verbose output.")
         :default(false)
 
 ---@type Combustion.Options
 local cli_opts = parser:parse()
 
-local opts, err = compile(cli_opts)
-if not opts then error(err) end
+local opts = compile(cli_opts)
 
 if cli_opts.verbose then
     print("Options:")
     print(opts)
 end
 
-local success, err = executables[cli_opts.type](opts)
-if not success then error(err) end
+executables[cli_opts.type](opts)
 
 print("\x1b[32mSuccess!\x1b[0m")

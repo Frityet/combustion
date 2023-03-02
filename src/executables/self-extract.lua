@@ -4,7 +4,6 @@
 -- https://opensource.org/licenses/MIT
 
 ---@param arg Combustion.BuildOptions
----@return boolean ok, string? err
 return function (arg)
-    return true, nil
+
 end

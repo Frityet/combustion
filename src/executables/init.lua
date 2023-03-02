@@ -1,4 +1,4 @@
----@type { [string] : fun(args: Combustion.BuildOptions): boolean, string? }
+---@type { [string] : fun(args: Combustion.BuildOptions) }
 local packages = {
     ["self-extract"] = require("executables.self-extract")
 }

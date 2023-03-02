@@ -5,7 +5,9 @@
 
 local export = {}
 
----@alias LuaVersion "5.1"|"5.2"|"5.3"|"5.4"|"jit"|"other"
+---@alias Platform "Windows"|"Linux"|"MacOS"|"Other"
+
+---@alias LuaVersion "5.1"|"5.2"|"5.3"|"5.4"|"JIT"|"Other"
 
 ---@class Lua
 ---@field version LuaVersion
@@ -13,8 +15,8 @@ local export = {}
 ---@field compiler string
 
 local stringx = require("pl.stringx")
-local Platform = require("platform")
 local path = require("pl.path")
+local ffi  = require("ffi")
 
 ---@type LuaFileSystem
 local lfs = require("lfs")
@@ -22,10 +24,10 @@ local lfs = require("lfs")
 ---@param name string
 ---@return string? executable, string? err
 function export.find_executable(name)
-    local platform = Platform.get_platform()
+    local platform = ffi.os --[[@as Platform]]
     local path = os.getenv("PATH")
     if not path then return nil, "Could not find PATH environment variable" end
-    if platform == Platform.Windows then
+    if platform == "Windows" then
         local paths = stringx.split(path, ";")
         for _, path in ipairs(paths) do
             local file = path.."\\"..name..".exe"
@@ -68,7 +70,6 @@ export.programs = setmetatable({}, {
 
 ---@return Lua? info, string? err
 function export.find_lua()
-    ---First, search through the path for "lua", then luajit
     ---@type Lua
     local luainfo = {}
 
@@ -78,10 +79,10 @@ function export.find_lua()
             luainfo.interpreter = lua
             if name == "" then
                 local ver = export.programs[luainfo.interpreter] "-v"():match("Lua (%d+%.%d+)")
-                if ver and ver == "5,1" or ver == "5.2" or ver == "5.3" or ver == "5.4" then
+                if ver and ver == "5.1" or ver == "5.2" or ver == "5.3" or ver == "5.4" then
                     luainfo.version = ver
                 else
-                    luainfo.version = "other"
+                    luainfo.version = "Other"
                 end
             else
                 luainfo.version = name --[[@as LuaVersion]]
@@ -105,8 +106,8 @@ function export.verify_lua(lua)
     local version = verstr:match("Lua (%d+%.%d+)")
     if not version then
         version = verstr:match("LuaJIT (%d+%.%d+)")
-        if not version then version = "other"
-        else version = "jit" end
+        if not version then version = "Other"
+        else version = "JIT" end
     end
 
     return version, nil

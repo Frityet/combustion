@@ -18,7 +18,7 @@ description = {
 dependencies = {
     "luafilesystem",
     "penlight",
-    "lua-zlib",
+    "lua-zip",
     "argparse",
     "lua >= 5.1, < 5.5",
 }
@@ -33,7 +33,6 @@ build = {
 
     modules = {
         ["utilities"] = "src/utilities.lua",
-        ["platform"] = "src/platform.lua",
         ["compile"] = "src/compile.lua",
 
         ["executables"] = "src/executables/init.lua",
