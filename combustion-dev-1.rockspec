@@ -19,7 +19,7 @@ dependencies = {
     "luafilesystem",
     "penlight",
     "argparse",
-    "lua >= 5.1, < 5.5",
+    "lua 5.1",
 }
 build = {
     type = "builtin",
