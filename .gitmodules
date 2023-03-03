@@ -1,0 +1,9 @@
+[submodule "src/argparse"]
+	path = src/argparse
+	url = https://github.com/goldenstein64/argparse-definitions.git
+[submodule "types/argparse"]
+	path = types/argparse
+	url = https://github.com/goldenstein64/argparse-definitions.git
+[submodule "types/pl"]
+	path = types/pl
+	url = https://github.com/goldenstein64/pl-definitions.git

@@ -1,3 +1,4 @@
+---@diagnostic disable: lowercase-global
 package = "combustion"
 version = "dev-1"
 source = {
@@ -17,9 +18,8 @@ description = {
 dependencies = {
     "luafilesystem",
     "penlight",
-    "lua-zip",
     "argparse",
-    "lua >= 5.1, < 5.5",
+    "lua 5.1",
 }
 build = {
     type = "builtin",
@@ -31,15 +31,16 @@ build = {
     },
 
     modules = {
+        ["utilities"] = "src/utilities.lua",
+        ["compile"] = "src/compile.lua",
+
         ["executables"] = "src/executables/init.lua",
         ["executables.self-extract"] = "src/executables/self-extract.lua",
---        ["executables.package"] = "src/executables/package/init.lua",
---        ["executables.package.osx"] = "src/executables/package/osx.lua",
---        ["executables.package.linux"] = "src/executables/package/linux.lua",
---        ["executables.package.windows"] = "src/executables/package/windows.lua",
-
-
-
-        ["utilities"] = "src/utilities.lua"
+        ["executables.loaders.self-extract.loader"] = "src/executables/loaders/self-extract/loader.lua",
+        ["executables.loaders.self-extract.miniz"] = "src/executables/loaders/self-extract/miniz.lua",
+        ["zip"] = {
+            sources = { "src/miniz.c", "src/zip.c" },
+            incdirs = { "src/" }
+        }
     }
 }

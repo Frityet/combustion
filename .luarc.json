@@ -17,6 +17,10 @@
         "unbalanced": "Error",
         "unused": "Hint"
     },
+    "diagnostics.disable": [
+        "duplicate-doc-alias",
+        "duplicate-doc-field"
+    ],
     "runtime.path": [
         "src/?.lua",
         "src/?/init.lua",
@@ -29,9 +33,13 @@
         ".vscode"
     ],
     "workspace.library": [
+        "types/argparse/",
+        "types/pl/",
+        "${3rd}/lfs/library",
         "lua_modules/lib/lua/5.1/",
         "lua_modules/share/lua/5.1/",
-        "${3rd}/lfs/library"
     ],
-    "workspace.useGitIgnore": false
+    "diagnostics.libraryFiles": "Opened",
+    "workspace.useGitIgnore": false,
+
 }
