@@ -13,9 +13,9 @@ combust-out/
 /.luarocks
 build/
 
-**/.DS_Store
+*/.DS_Store
 
-**/.o
-**/.so
-**/.dylib
-**/.dll
+**/*.o
+**/*.so
+**/*.dylib
+**/*.dll

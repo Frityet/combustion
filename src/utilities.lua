@@ -179,7 +179,7 @@ export.platform = "Other"
 
 local os = ffi.os
 if os == "OSX" then export.platform = "MacOS"
-elseif os == "Windows" then export.platform "Windows"
-elseif os == "Linux" then export.platform "Linux" end
+elseif os == "Windows" then export.platform = "Windows"
+elseif os == "Linux" then export.platform = "Linux" end
 
 return export
