@@ -17,6 +17,7 @@ local export = {}
 local stringx = require("pl.stringx")
 local path = require("pl.path")
 local ffi  = require("ffi")
+string.buffer = require("string.buffer")
 
 ---@type LuaFileSystem
 local lfs = require("lfs")
@@ -59,7 +60,7 @@ export.programs = setmetatable({}, {
                 contents = stringx.strip(contents)
                 return contents
             else
-                exec = exec.." "..x
+                exec = exec.." "..tostring(x)
                 return arg
             end
         end
@@ -92,6 +93,16 @@ function export.find_lua()
     end
 
     if not luainfo.interpreter then return nil, "Could not find Lua interpreter" end
+
+    luainfo.interpreter = export.find_executable(luainfo.interpreter) --[[@as string]]
+
+    if luainfo.version == "JIT" then
+        luainfo.compiler = luainfo.interpreter
+    else
+        local luac, err = export.find_executable("luac"..luainfo.version)
+        if not luac then return nil, err end
+        luainfo.compiler = luac
+    end
 
     return luainfo, nil
 end
@@ -137,5 +148,38 @@ function export.find(dir, filetype)
 
     return files, nil
 end
+
+
+---@param cc string
+---@return boolean
+function export.is_gcc_like(cc)
+    return not not export.programs[cc] "-v"()
+end
+
+---@param symname string
+---@param data string
+---@param size number?
+---@return string
+function export.bin2c(symname, data, size)
+    size = size or #data
+    local buf = string.buffer.new((size * 8) + #("#include <stddef.h>\n\nconst unsigned char "..symname.."[] = {\n};\nconst size_t "..symname.."_size = "..size..";\n"))
+
+    buf:putf("#include <stddef.h>\n\nconst unsigned char %s[] = {\n", symname)
+    for i = 1, #data do
+        buf:putf("%d,", data:byte(i))
+        if i % 16 == 0 then buf:putf("\n") end
+    end
+    buf:putf("\n};\nconst size_t %s_size = %d;\n", symname, size)
+
+    return buf:tostring()
+end
+
+---@type Platform
+export.platform = "Other"
+
+local os = ffi.os
+if os == "OSX" then export.platform = "MacOS"
+elseif os == "Windows" then export.platform "Windows"
+elseif os == "Linux" then export.platform "Linux" end
 
 return export

@@ -16,13 +16,16 @@
 ---@field entry string
 ---@field name string
 ---@field c_compiler string
+---@field c_flags string[]?
 ---@field linker string
 ---@field verbose boolean
+---@field graphical boolean
 
 
 ---@type argparse
 local argparse = require("argparse")
 local pretty = require("pl.pretty")
+local path = require("pl.path")
 
 local utilities = require("utilities")
 local compile = require("compile")
@@ -71,28 +74,57 @@ parser:argument("type", "The type of project to pack.")
         }
         :default "self-extract"
 
+
 --Options
 parser:option("-o --output-dir", "The output directory to write to.")
         :args(1)
         :default "build"
+        :convert(path.abspath)
 
 parser:option("-S --source-dirs", "The source directory to pack.")
         :args "+"
         :default "."
+        :convert(function (f)
+            if not path.isdir(f) then error("Source directory "..f.." does not exist.") end
+            return path.abspath(f)
+        end)
 
 parser:option("-L --library-dirs", "Location of C libraries")
         :args "+"
+        :convert(function (f)
+            if not path.isdir(f) then error("Library directory "..f.." does not exist.") end
+            return path.abspath(f)
+        end)
 
 parser:option("-R --resource-dirs", "Additional resources to pack.")
         :args "+"
+        :convert(function (f)
+            if not path.isdir(f) then error("Resource directory "..f.." does not exist.") end
+            return path.abspath(f)
+        end)
 
 parser:option("--lua", "Path to the lua executable")
         :args(1)
         :default(utilities.find_lua().interpreter)
+        :convert(function (f)
+            if not path.isfile(f) then error("Lua executable "..f.." does not exist.") end
+            local lua, err = utilities.verify_lua(f)
+            if not lua then error(err) end
+
+            return path.abspath(f)
+        end)
 
 parser:option("--luac", "Path to the lua compiler, must be compatable with the lua executable.")
         :args(1)
-        :default(utilities.find_lua().compiler)
+        :default("<lua>")
+        :convert(function (f)
+            if f == "<lua>" then return f end
+            if not path.isfile(f) then error("Lua compiler "..f.." does not exist.") end
+            local lua, err = utilities.verify_lua(f)
+            if not lua then error(err) end
+
+            return path.abspath(f)
+        end)
 
 parser:option("--c-compiler", "C compiler to use.")
         :args(1)
@@ -110,13 +142,29 @@ parser:option("--c-compiler", "C compiler to use.")
 
             if not cc then
                 warning("No C compiler found. Some features may not work.")
+            else
+                cc = utilities.find_executable(cc)
             end
 
             return cc
         end)())
+        :convert(function (f)
+            local cc, err = utilities.find_executable(f)
+            if not cc then error(err) end
+            return cc
+        end)
+
+parser:option("--cflags", "Flags to pass to the C compiler.")
+        :args "+"
 
 parser:option("--linker", "Linker to use.")
         :args(1)
+        :default "<c-compiler>"
+
+parser:option("--ldflags", "Flags to pass to the linker.")
+        :args "+"
+        :default { "-flto" }
+
 
 parser:option("-e --entry", "The entry point of the project.")
         :args(1)
@@ -125,6 +173,9 @@ parser:option("-e --entry", "The entry point of the project.")
 parser:option("-n --name", "The name of the project.")
         :args(1)
         :default "combust"
+
+parser:flag("--graphical", "(Windows only) Create a graphical application.")
+        :default(false)
 
 parser:flag("-v --verbose", "Print verbose output.")
         :default(false)

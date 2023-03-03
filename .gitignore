@@ -14,3 +14,8 @@ combust-out/
 build/
 
 **/.DS_Store
+
+**/.o
+**/.so
+**/.dylib
+**/.dll

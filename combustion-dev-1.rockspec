@@ -18,7 +18,6 @@ description = {
 dependencies = {
     "luafilesystem",
     "penlight",
-    "lua-zip",
     "argparse",
     "lua >= 5.1, < 5.5",
 }
@@ -37,5 +36,11 @@ build = {
 
         ["executables"] = "src/executables/init.lua",
         ["executables.self-extract"] = "src/executables/self-extract.lua",
+        ["executables.loaders.self-extract.loader"] = "src/executables/loaders/self-extract/loader.lua",
+        ["executables.loaders.self-extract.miniz"] = "src/executables/loaders/self-extract/miniz.lua",
+        ["zip"] = {
+            sources = { "src/miniz.c", "src/zip.c" },
+            incdirs = { "src/" }
+        }
     }
 }

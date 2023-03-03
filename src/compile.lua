@@ -6,6 +6,7 @@
 ---@class Combustion.BuildOptions
 ---@field lua Lua
 ---@field c_compiler string?
+---@field c_flags string[]
 ---@field linker string?
 ---@field build_dir string
 ---@field bin_dir string
@@ -15,6 +16,9 @@
 ---@field c_libraries string[]?
 ---@field resources_dir string?
 ---@field resources string[]?
+---@field frameworks string[]?
+---@field verbose boolean
+---@field graphical boolean
 ---@field entry string
 
 local directory = require("pl.dir")
@@ -49,21 +53,25 @@ local function validate_arguments(arg)
 
     --lua source dir
     opts.lua_source_dir = path.join(opts.build_dir, "lua")
+    path.rmdir(opts.lua_source_dir)
     ok, err = directory.makepath(opts.lua_source_dir)
     if not ok then error(err) end
 
     opts.bin_dir = path.join(opts.build_dir, "bin")
+    path.rmdir(opts.bin_dir)
     ok, err = directory.makepath(opts.bin_dir)
     if not ok then error(err) end
 
     if arg.library_dirs ~= nil then
         opts.lib_dir = path.join(opts.build_dir, "lib")
+        path.rmdir(opts.lib_dir)
         ok, err = directory.makepath(opts.lib_dir)
         if not ok then error(err) end
     end
 
     if arg.resources_dirs ~= nil then
         opts.resources_dir = path.join(opts.build_dir, "resources")
+        path.rmdir(opts.resources_dir)
         ok, err = directory.makepath(opts.resources_dir)
         if not ok then error(err) end
     end
@@ -79,17 +87,19 @@ local function validate_arguments(arg)
             interpreter = arg.lua,
             version = luaver
         }
-        if arg.luac == nil then
-            if opts.lua.version == "JIT" then
-                opts.lua.compiler = "luajit"
-            else
-                opts.lua.compiler = "luac"
-            end
-        else
-            opts.lua.compiler = arg.luac
-        end
     end
 
+    if arg.luac == nil or arg.luac == "<lua>" then
+        if opts.lua.version == "JIT" then
+            opts.lua.compiler = "luajit"
+        else
+            ok, err = utilities.find_executable("luac"..(opts.lua.version == "Other" and "" or opts.lua.version))
+            if not ok then error(err) end
+            opts.lua.compiler = ok
+        end
+    else
+        opts.lua.compiler = arg.luac
+    end
 
     if arg.c_compiler == nil then
         warning("No C compiler found, some features may not work")
@@ -97,13 +107,20 @@ local function validate_arguments(arg)
         opts.c_compiler = arg.c_compiler
     end
 
-    if opts.c_compiler and not arg.linker then
+    if opts.c_compiler and not arg.linker or arg.linker == "<c-compiler>" then
         opts.linker = arg.c_compiler
     elseif arg.linker then
         opts.linker = arg.linker
     end
 
+    if arg.c_flags then
+        opts.c_flags = arg.c_flags
+    end
+
+
     opts.entry = arg.entry
+    opts.verbose = arg.verbose
+    opts.graphical = arg.graphical
 
     return opts
 end
@@ -139,7 +156,11 @@ return function (arg)
 
             local ok, err = directory.makepath(path.dirname(dest))
             if not ok then error(err) end
-            print("Compiling lua file: "..file.." -> "..dest.."...")
+            if opts.lua.version == "JIT" then
+                print("$ "..opts.lua.compiler.." -b "..file.." "..dest)
+            else
+                print("$ "..opts.lua.compiler.." -o "..dest.." "..file)
+            end
             ok = compile_lua(opts.lua.compiler, file, dest)
             if not ok then error("Failed to compile "..file) end
         end
@@ -170,7 +191,6 @@ return function (arg)
 
                 local ok, err = directory.makepath(path.dirname(dest))
                 if not ok then error(err) end
-                print("Copying C library: "..lib.." -> "..dest.."...")
                 ok = file.copy(lib, dest)
                 if not ok then error("Failed to copy "..lib) end
             end
@@ -194,7 +214,6 @@ return function (arg)
 
                 local ok, err = directory.makepath(path.dirname(dest))
                 if not ok then error(err) end
-                print("Copying resource: "..res.." -> "..dest.."...")
                 ok = file.copy(res, dest)
                 if not ok then error("Failed to copy "..res) end
             end

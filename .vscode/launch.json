@@ -22,6 +22,17 @@
                 "--sources=./src/",
             ],
             "cwd": "${workspaceFolder}",
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Launch",
+            "program": "${workspaceFolder}/build/bin/main",
+            "args": [
+                "--sources=./src/",
+            ],
+            "cwd": "${workspaceFolder}",
+            "terminal": "console"
         }
     ]
 }
