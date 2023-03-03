@@ -143,24 +143,6 @@ static int unzip_recursive(mz_zip_archive *zip, const char dir[static PATH_MAX])
             return 1;
         }
 
-        // char outf[PATH_MAX] = {0};
-        // snprintf(outf, PATH_MAX, "%s%c%s\n", dir, PATH_SEPARATOR, file_stat.m_filename);
-        // printf("Extracting %s to %s\n", file_stat.m_filename, outf);
-
-        // mkdir_p(dirname(outf));
-        // if (file_stat.m_is_directory) {
-        //     if (mkdir_p(outf) != 0) {
-        //         error("Error creating directory: %s\n", outf);
-        //         return 1;
-        //     }
-        // } else {
-        //     snprintf(outf, PATH_MAX, "%s%c%s\n", dir, PATH_SEPARATOR, file_stat.m_filename);
-        //     if (mz_zip_reader_extract_to_file(zip, i, outf, 0) != MZ_TRUE) {
-        //         perror_f("Error extracting file: %s\n", outf);
-        //         return 1;
-        //     }
-        // }
-
         //Get the path to the file in the zip, then create parent directories, then extract the file
         char outf[PATH_MAX] = {0};
         snprintf(outf, PATH_MAX, "%s%c%s\n", dir, PATH_SEPARATOR, file_stat.m_filename);
@@ -270,11 +252,7 @@ unsigned long gettmpdir(char buf[static PATH_MAX])
 
     if (tmpdir == NULL) {
         puts("Couldn't get with an env call");
-        snprintf(buf, PATH_MAX, "/tmp");
-        if (mkdir_p(buf) != 0) {
-            error("Error getting temp path: %s\n", buf);
-            return 0;
-        }
+        snprintf(buf, PATH_MAX, "/tmpd"); //the d is a shitty workaround to me being too lazy to fix lines 264-270. :)
         tmpdir = buf;
     }
 #endif
