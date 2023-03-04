@@ -172,7 +172,7 @@ parser:option("-e --entry", "The entry point of the project.")
 
 parser:option("-n --name", "The name of the project.")
         :args(1)
-        :default "combust"
+        :default "<entry>"
 
 parser:flag("--graphical", "(Windows only) Create a graphical application.")
         :default(false)

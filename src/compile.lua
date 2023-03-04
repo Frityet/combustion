@@ -19,6 +19,7 @@
 ---@field frameworks string[]?
 ---@field verbose boolean
 ---@field graphical boolean
+---@field name string
 ---@field entry string
 
 local directory = require("pl.dir")
@@ -121,6 +122,11 @@ local function validate_arguments(arg)
     opts.entry = arg.entry
     opts.verbose = arg.verbose
     opts.graphical = arg.graphical
+    if arg.name == "<entry>" then
+        opts.name = arg.entry:gsub(path.extension(arg.entry), "")..(utilities.platform == "Windows" and ".exe" or "")
+    else
+        opts.name = arg.name
+    end
 
     return opts
 end

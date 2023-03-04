@@ -12,6 +12,7 @@ combust-out/
 /lua_modules
 /.luarocks
 build/
+build-test/
 
 */.DS_Store
 

@@ -57,7 +57,7 @@ return function (opt)
         }
     end
 
-    local bin = path.join(opt.bin_dir, opt.entry:gsub(path.extension(opt.entry), "")..(utilities.platform == "Windows" and ".exe" or ""))
+    local bin = path.join(opt.bin_dir, opt.name)
     local obj_dir = path.join(opt.build_dir, "obj")
     path.rmdir(obj_dir)
     file.delete(bin)
