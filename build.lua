@@ -23,4 +23,4 @@ os.execute("./luarocks make")
 os.execute("./lua_modules/bin/combust "..table.concat(arg, " ").." -o build --name=test")
 
 print("Testing binary")
-os.execute("./build/bin/test "..table.concat(arg, " ").." -o build-test --name=test")
+os.execute("./build/bin/test "..table.concat(arg, " ").." -o build/test --name=test")

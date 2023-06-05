@@ -1,4 +1,5 @@
-return [[    /**
+return [[
+    /**
     * Copyright (c) 2023 Amrit Bhogal
     *
     * This software is released under the MIT License.
@@ -298,4 +299,5 @@ return [[    /**
        int ret = run_lua(tmpdir, argc, argv);
        rmdir(tmpdir);
    }
+
 ]]

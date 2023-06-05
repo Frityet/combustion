@@ -153,7 +153,7 @@ end
 ---@param cc string
 ---@return boolean
 function export.is_gcc_like(cc)
-    return not not export.programs[cc] "-v"()
+    return not not export.programs[cc] "--version"()
 end
 
 ---@param symname string

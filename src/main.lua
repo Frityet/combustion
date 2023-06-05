@@ -10,6 +10,7 @@
 ---@field output_dir string
 ---@field source_dirs string[]
 ---@field library_dirs string[]
+---@field link string[]
 ---@field resources_dirs string[]
 ---@field lua string?
 ---@field luac string?
@@ -26,6 +27,7 @@
 local argparse = require("argparse")
 local pretty = require("pl.pretty")
 local path = require("pl.path")
+local tablex = require("pl.tablex")
 
 local utilities = require("utilities")
 local compile = require("compile")
@@ -67,11 +69,8 @@ parser:add_complete()
 
 parser:argument("type", "The type of project to pack.")
         :args(1)
-        :choices {
-            "self-extract",
-            "app",
-            "directory"
-        }
+        --TODO: Make this dynamically adapt to the executable types in `executables`
+        :choices(tablex.keys(require("executables")))
         :default "self-extract"
 
 
@@ -95,6 +94,11 @@ parser:option("-L --library-dirs", "Location of C libraries")
             if not path.isdir(f) then error("Library directory "..f.." does not exist.") end
             return path.abspath(f)
         end)
+
+parser:option("-l --link", "Libraries to statically link")
+        :args "+"
+        :default { "c" }
+
 
 parser:option("-R --resource-dirs", "Additional resources to pack.")
         :args "+"
@@ -170,11 +174,13 @@ parser:option("-e --entry", "The entry point of the project.")
         :args(1)
         :default "main.lua"
 
+
+
 parser:option("-n --name", "The name of the project.")
         :args(1)
         :default "<entry>"
 
-parser:flag("--graphical", "(Windows only) Create a graphical application.")
+parser:flag("--graphical", "(Windows only) Create a application which does not spawn a console window")
         :default(false)
 
 parser:flag("-v --verbose", "Print verbose output.")
