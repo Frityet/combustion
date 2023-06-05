@@ -97,7 +97,7 @@ parser:option("-L --library-dirs", "Location of C libraries")
 
 parser:option("-l --link", "Libraries to statically link")
         :args "+"
-        :default { "c" }
+        :default { "c", "m" }
 
 
 parser:option("-R --resource-dirs", "Additional resources to pack.")

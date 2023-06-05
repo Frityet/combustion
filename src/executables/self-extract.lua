@@ -43,14 +43,19 @@ return function (opt)
     ---@return { to: fun(self, to: string): boolean, string? }
     local function link(files)
         return {
-            to = function (_, to)
-                local result = utilities.programs[opt.linker]
+            link_with = function(self, ...)
+                self.libs = {...}
+                return self
+            end,
+
+            to = function (self, to)
+                local result = utilities.programs[assert(opt.linker)]
                 for _, file in ipairs(files) do
                     result = result(file)
                 end
 
-                local out, err = result "-o" (to)()
-                print(string.format("$ %s %s -o %s", opt.linker, table.concat(files, " "), to))
+                local out, err = result "-o" (to) "-L" (opt.lib_dir or "./") ("-l"..table.concat(self.libs, " -l"))()
+                print(string.format("$ %s %s -o %s %s", opt.linker, table.concat(files, " "), to, "-l"..table.concat(self.libs, " -l")))
                 if not out then return false, err end
                 return true
             end
