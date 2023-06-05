@@ -175,7 +175,6 @@ parser:option("-e --entry", "The entry point of the project.")
         :default "main.lua"
 
 
-
 parser:option("-n --name", "The name of the project.")
         :args(1)
         :default "<entry>"

@@ -14,6 +14,7 @@
 ---@field lua_files string[]
 ---@field lib_dir string?
 ---@field c_libraries string[]?
+---@field link string[]?
 ---@field resources_dir string?
 ---@field resources string[]?
 ---@field frameworks string[]?

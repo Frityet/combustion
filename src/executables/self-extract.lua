@@ -39,23 +39,33 @@ return function (opt)
         }
     end
 
+    ---@class LinkResult
+    ---@field private libs string[]?
+    ---@field to fun(self, to: string): boolean, string?
+    ---@field with fun(self, libs: string[]?): LinkResult
+
     ---@param files string[]
-    ---@return { to: fun(self, to: string): boolean, string? }
+    ---@return LinkResult
     local function link(files)
         return {
-            link_with = function(self, ...)
-                self.libs = {...}
+            with = function(self, libs)
+                self.libs = libs
                 return self
             end,
 
             to = function (self, to)
-                local result = utilities.programs[assert(opt.linker)]
+                local linkercmd = utilities.programs[assert(opt.linker)]
                 for _, file in ipairs(files) do
-                    result = result(file)
+                    linkercmd = linkercmd(file)
                 end
 
-                local out, err = result "-o" (to) "-L" (opt.lib_dir or "./") ("-l"..table.concat(self.libs, " -l"))()
-                print(string.format("$ %s %s -o %s %s", opt.linker, table.concat(files, " "), to, "-l"..table.concat(self.libs, " -l")))
+                linkercmd = linkercmd "-o" (to) "-L" (opt.lib_dir or "./")
+                if self.libs ~= nil then
+                    linkercmd = linkercmd("-l"..table.concat(self.libs, " -l"))
+                end
+
+                local out, err = out()
+                print(string.format("$ %s %s -o %s %s", opt.linker, table.concat(files, " "), to, "-l"..table.concat(self.libs or {}, " -l")))
                 if not out then return false, err end
                 return true
             end
@@ -115,6 +125,7 @@ return function (opt)
 
     --Now, we need to link the object files together
     ok, err = link(objects)
+              :with(opt.link)
               :to(bin)
 
     path.rmdir(obj_dir)
