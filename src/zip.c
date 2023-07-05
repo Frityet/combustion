@@ -122,7 +122,6 @@ static int add_files_to_zip(mz_zip_archive *zip, const char *dir, const char *pr
 
     // Iterate over all files in the directory
     do {
-        // Ignore "." and ".." entries
         if (strcmp(find_data.cFileName, ".") == 0 || strcmp(find_data.cFileName, "..") == 0) {
             continue;
         }

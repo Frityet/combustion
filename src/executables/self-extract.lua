@@ -64,7 +64,7 @@ return function (opt)
                     linkercmd = linkercmd("-l"..table.concat(self.libs, " -l"))
                 end
 
-                local out, err = out()
+                local out, err = linkercmd()
                 print(string.format("$ %s %s -o %s %s", opt.linker, table.concat(files, " "), to, "-l"..table.concat(self.libs or {}, " -l")))
                 if not out then return false, err end
                 return true

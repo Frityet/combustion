@@ -1,6 +1,6 @@
 ---@diagnostic disable: lowercase-global
 package = "combustion"
-version = "dev-1"
+version = "dev-2"
 source = {
     url = "git://github.com/Frityet/combustion"
 }
@@ -19,7 +19,7 @@ dependencies = {
     "luafilesystem",
     "penlight",
     "argparse",
-    "lua 5.1",
+    "lua ~> 5.1",
 }
 build = {
     type = "builtin",
