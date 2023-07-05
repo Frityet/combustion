@@ -205,9 +205,9 @@ static int run_lua(const char tmpdir[const PATH_MAX], int argc, char *argv[stati
     //argv[0] is the path to the lua interpreter, argv[1] is the path to the entrypoint file
     char **args = calloc(argc + 2 + 2, sizeof(char *));
     memcpy(args, (char *[]) {
-         lua_path, "-e", bootstrap, entrypoint_path
-    }, 4 * sizeof(char *));
-    memcpy(args + 4, argv + 1, argc * sizeof(char *));
+         lua_path, "-e", bootstrap//, entrypoint_path
+    }, 3 * sizeof(char *));
+    memcpy(args + 3, argv + 1, argc * sizeof(char *));
 
     int ret = execv(lua_path, args);
     free(args);
