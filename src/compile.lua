@@ -135,11 +135,6 @@ end
 ---@param arg Combustion.Options
 ---@return Combustion.BuildOptions
 return function (arg)
-    local oldprint = print
-    local function print(...)
-        if arg.verbose then oldprint(...) end
-    end
-
     local opts = validate_arguments(arg)
 
     --copy lua files by recursively copying the source directory preserving root

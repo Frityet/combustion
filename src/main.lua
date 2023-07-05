@@ -188,12 +188,14 @@ parser:flag("-v --verbose", "Print verbose output.")
 ---@type Combustion.Options
 local cli_opts = parser:parse()
 
+if not cli_opts.verbose then
+    print = function (...) end
+end
+
 local opts = compile(cli_opts)
 
-if cli_opts.verbose then
-    print("Options:")
-    print(opts)
-end
+print("Options:")
+print(opts)
 
 executables[cli_opts.type](opts)
 
