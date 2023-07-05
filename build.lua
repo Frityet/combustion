@@ -20,7 +20,9 @@ print("Building executables...")
 os.execute("./luarocks --lua-version=5.1 init")
 os.execute("./luarocks make")
 
-os.execute("./lua_modules/bin/combust "..table.concat(arg, " ").." -o build --name=test")
+os.execute("./lua_modules/bin/combust -S src lua_modules/share/lua/5.1/ -L lua_modules/lib/lua/5.1 --lua=/usr/local/bin/luajit -v -o build --name=test")
 
-print("Testing binary")
-os.execute("./build/bin/test "..table.concat(arg, " ").." -o build/test --name=test")
+if arg[1] then
+    print("Testing binary")
+    os.execute("./build/bin/test "..table.concat(arg, " ").." -o build/test --name=test")
+end

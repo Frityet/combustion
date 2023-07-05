@@ -1,3 +1,6 @@
 {
     "licenser.license": "MIT",
+    "clangd.fallbackFlags": [
+        "-I../../../",
+    ]
 }

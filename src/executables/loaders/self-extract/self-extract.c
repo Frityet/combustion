@@ -60,8 +60,21 @@ static void perror_f(const char *fmt, ...)
     va_end(args);
     perror("");
 }
+#define error(fmt, ...) do { perror_f("["__FILE__":"STR(__LINE__)"] " fmt __VA_OPT__(,) __VA_ARGS__); exit(1); } while (0)
 
-#define error(fmt, ...) do { perror_f("["__FILE__":"STR(__LINE__)"] " fmt, __VA_ARGS__); exit(1); } while (0)
+bool debug_output;
+static void debug_f(const char *fmt, ...)
+{
+    if (!debug_output)
+        return;
+    va_list args;
+    va_start(args, fmt);
+    vfprintf(stderr, fmt, args);
+    va_end(args);
+}
+#define debug(fmt, ...) do { debug_f("["__FILE__":"STR(__LINE__)"] " fmt __VA_OPT__(,) __VA_ARGS__); } while (0)
+
+
 /* recursive mkdir */
 //Taken from https://gist.github.com/ChisholmKyle/0cbedcd3e64132243a39
 int mkdir_p(const char dir[static PATH_MAX]) {
@@ -196,9 +209,11 @@ static int run_lua(const char tmpdir[const PATH_MAX], int argc, char *argv[stati
 #else
     char lua_path[PATH_MAX] = {0};
     snprintf(lua_path, PATH_MAX, "%s/bin/lua", tmpdir);
+    debug("Lua path: %s\n", lua_path);
     chmod(lua_path, 0755); //Make sure the lua interpreter is executable
     char entrypoint_path[PATH_MAX] = {0};
     snprintf(entrypoint_path, PATH_MAX, "%s/lua/%s", tmpdir, STR(COMBUSTION_ENTRY));
+    debug("Entrypoint path: %s\n", entrypoint_path);
 
     char bootstrap[sizeof(LUA_BOOTSTRAP) + PATH_MAX * 4] = {0};
     snprintf(bootstrap, sizeof(bootstrap), LUA_BOOTSTRAP, tmpdir, tmpdir, tmpdir, entrypoint_path);
@@ -263,11 +278,21 @@ static
 //This program will be run when the executable is run, and it will unpack the zip file to tmpdir, and run the lua interpreter on the entrypoint file
 int main(int argc, char *argv[static argc])
 {
+    if (argc > 1) {
+        debug_output = strcmp(argv[1], "$COMBUSTION_VERBOSE$") == 0;
+        if (debug_output) {
+            argv++;
+            argv[0] = argv[-1]; // need proper argv[0] for debug output
+            argc--;
+        }
+    }
+
     srand(time(NULL));
     //Directory setup
     char cwd[PATH_MAX] = {0}, tmpdir[PATH_MAX] = {0};
     getcwd(cwd, PATH_MAX);
     unsigned long id = gettmpdir(tmpdir);
+    debug("tmpdir: %s (id: %ul)\n", tmpdir, id);
 
     mz_zip_archive zip_archive = {0};
 
@@ -286,6 +311,10 @@ int main(int argc, char *argv[static argc])
 #undef ZIP_ERR
     //Close the zip file
     mz_zip_reader_end(&zip_archive);
+
+    debug("Running lua with args: ");
+    for (int i = 0; i < argc; i++)
+        debug("  [%d] = \"%s\"\n", i, argv[i]);
 
     //Run the lua interpreter located in `tmpdir`/bin/lua[.exe]
     int ret = run_lua(tmpdir, argc, argv);
