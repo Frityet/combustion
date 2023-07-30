@@ -27,12 +27,13 @@
             "type": "lldb",
             "request": "launch",
             "name": "Launch",
-            "program": "${workspaceFolder}/build/bin/main",
+            "program": "${workspaceFolder}/build/bin/test",
             "args": [
-                "--sources=./src/",
+                "$COMBUSTION_VERBOSE$",
+                "--help",
             ],
             "cwd": "${workspaceFolder}",
-            "terminal": "console"
+            "terminal": "integrated"
         }
     ]
 }

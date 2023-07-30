@@ -39,7 +39,6 @@
         "lua_modules/lib/lua/5.1/",
         "lua_modules/share/lua/5.1/",
     ],
-    "diagnostics.libraryFiles": "Opened",
+    "diagnostics.libraryFiles": "Enable",
     "workspace.useGitIgnore": false,
-
 }
