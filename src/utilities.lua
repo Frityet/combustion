@@ -5,9 +5,9 @@
 
 local export = {}
 
----@alias Platform "Windows"|"Linux"|"MacOS"|"Other"
+---@alias Platform "Windows"|"Linux"|"OSX"|string
 
----@alias LuaVersion "5.1"|"5.2"|"5.3"|"5.4"|"JIT"|"Other"
+---@alias LuaVersion "5.1"|"5.2"|"5.3"|"5.4"|"JIT"|string
 
 ---@class Lua
 ---@field version LuaVersion
@@ -16,36 +16,10 @@ local export = {}
 
 local stringx = require("pl.stringx")
 local path = require("pl.path")
-local ffi  = require("ffi")
 string.buffer = require("string.buffer")
 
 ---@type LuaFileSystem
 local lfs = require("lfs")
-
----@param name string
----@return string? executable, string? err
-function export.find_executable(name)
-    local platform = ffi.os --[[@as Platform]]
-    local path = os.getenv("PATH")
-    if not path then return nil, "Could not find PATH environment variable" end
-    if platform == "Windows" then
-        local paths = stringx.split(path, ";")
-        for _, path in ipairs(paths) do
-            local file = path.."\\"..name..".exe"
-            if lfs.attributes(file, "mode") == "file" then return file
-            else return nil, "Could not find executable "..name end
-        end
-    else
-        --Use "which"
-        local res, err = export.programs["which"](name)()
-        if res then return res
-        else return nil, err end
-    end
-
-    return nil, "Could not find executable "..name
-end
-
----@alias FunctionArgument (fun(str: string): FunctionArgument) | fun(): string?, string?
 
 ---@type { [string] : FunctionArgument }
 export.programs = setmetatable({}, {
@@ -69,6 +43,55 @@ export.programs = setmetatable({}, {
     end
 })
 
+---@type Platform
+export.platform = "Other"
+do
+    if jit then
+        export.platform = require("ffi").os
+    else
+        if package.config:sub(1, 1) == '\\' then
+            export.platform = "Windows"
+        else
+            --uname time
+            local uname, err = export.programs["uname"]()
+            if not uname then
+                export.platform = "Other"
+                warning("Could not determine platform: "..err)
+            else
+                if uname == "Linux" then
+                    export.platform = "Linux"
+                elseif uname == "Darwin" then
+                    export.platform = "OSX"
+                else
+                    export.platform = uname
+                end
+            end
+        end
+    end
+end
+
+---@param name string
+---@return string? executable, string? err
+function export.find_executable(name)
+    local path = os.getenv("PATH")
+    if not path then return nil, "Could not find PATH environment variable" end
+    if export.platform == "Windows" then
+        local paths = stringx.split(path, ";")
+        for _, path in ipairs(paths) do
+            local file = path.."\\"..name..".exe"
+            if lfs.attributes(file, "mode") == "file" then return file
+            else return nil, "Could not find executable "..name end
+        end
+    else
+        --Use "which"
+        local res, err = export.programs["which"](name)()
+        if res then return res
+        else return nil, err end
+    end
+end
+
+---@alias FunctionArgument (fun(str: string): FunctionArgument) | fun(): string?, string?
+
 ---@return Lua? info, string? err
 function export.find_lua()
     ---@type Lua
@@ -79,11 +102,14 @@ function export.find_lua()
         if lua then
             luainfo.interpreter = lua
             if name == "" then
-                local ver = export.programs[luainfo.interpreter] "-v"():match("Lua (%d+%.%d+)")
+                local ver_str, err = export.programs[luainfo.interpreter] "-v"()
+                if not ver_str then return nil, err end
+
+                local ver = ver_str:match("Lua (%d+%.%d+)")
                 if ver and ver == "5.1" or ver == "5.2" or ver == "5.3" or ver == "5.4" then
                     luainfo.version = ver
                 else
-                    luainfo.version = "Other"
+                    luainfo.version = ver_str
                 end
             else
                 luainfo.version = name --[[@as LuaVersion]]
@@ -117,7 +143,7 @@ function export.verify_lua(lua)
     local version = verstr:match("Lua (%d+%.%d+)")
     if not version then
         version = verstr:match("LuaJIT (%d+%.%d+)")
-        if not version then version = "Other"
+        if not version then version = verstr
         else version = "JIT" end
     end
 
@@ -174,12 +200,23 @@ function export.bin2c(symname, data, size)
     return buf:tostring()
 end
 
----@type Platform
-export.platform = "Other"
+---Bin2C that works on non-luajit, so no `string.buffer`
+---@param symname string
+---@param data string
+---@param size number?
+---@return string
+function export.bin2c_portable(symname, data, size)
+    size = size or #data
+    local buf = {}
 
-local os = ffi.os
-if os == "OSX" then export.platform = "MacOS"
-elseif os == "Windows" then export.platform = "Windows"
-elseif os == "Linux" then export.platform = "Linux" end
+    table.insert(buf, "#include <stddef.h>\n\nconst unsigned char "..symname.."[] = {\n")
+    for i = 1, #data do
+        table.insert(buf, data:byte(i)..",")
+        if i % 16 == 0 then table.insert(buf, "\n") end
+    end
+    table.insert(buf, "\n};\nconst size_t "..symname.."_size = "..size..";\n")
+
+    return table.concat(buf)
+end
 
 return export
