@@ -69,7 +69,6 @@ parser:add_complete()
 
 parser:argument("type", "The type of project to pack.")
         :args(1)
-        --TODO: Make this dynamically adapt to the executable types in `executables`
         :choices(tablex.keys(require("executables")))
         :default "self-extract"
 
