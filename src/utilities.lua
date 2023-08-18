@@ -72,7 +72,6 @@ export.programs = setmetatable({}, {
 ---@return Lua? info, string? err
 function export.find_lua()
     ---@type Lua
-    ---@diagnostic disable-next-line: missing-fields
     local luainfo = {}
 
     for _, name in ipairs { "", "5.1", "5.2", "5.3", "5.4", "jit" } do

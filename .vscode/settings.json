@@ -2,6 +2,5 @@
     "licenser.license": "MIT",
     "clangd.fallbackFlags": [
         "-I../../../",
-        "-I/usr/local/include/"
     ]
 }

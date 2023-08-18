@@ -21,7 +21,7 @@
 #   define mkdir(path, mode) _mkdir(path)
 #   define getcwd(buf, size) _getcwd(buf, size)
 #   define mkstemp(buf) _mktemp(buf)
-#   define stat(path, buf) _stat(path, buf)
+#   define stat(path, buf) _stat(path, buf
 #   define PATH_SEPARATOR '\\'
 #   define PATH_MAX MAX_PATH
 #else
@@ -158,8 +158,7 @@ static int add_files_to_zip(mz_zip_archive *zip, const char *dir, const char *pr
     char filepath[512] = {0};
     while ((ep = readdir(dp)) != NULL) {
         if (ep->d_type == DT_DIR) {
-            //Intentionally ignore ALL hidden directories
-            if (ep->d_name[0] == '.')
+            if (strcmp(ep->d_name, ".") == 0 || strcmp(ep->d_name, "..") == 0)
                 continue;
 
             snprintf(filepath, sizeof(filepath) - 1, "%s/%s", dir, ep->d_name);

@@ -47,7 +47,6 @@ end
 ---@return Combustion.BuildOptions options
 local function validate_arguments(arg)
     ---@type Combustion.BuildOptions
-    ---@diagnostic disable-next-line: missing-fields
     local opts = {}
 
     local ok, err = directory.makepath(arg.output_dir)
@@ -88,8 +87,7 @@ local function validate_arguments(arg)
         if not luaver then error(err) end
         opts.lua = {
             interpreter = arg.lua,
-            version = luaver,
-            compiler = "luac"
+            version = luaver
         }
     end
 

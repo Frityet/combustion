@@ -1,6 +1,0 @@
-[COMBUSTION LOADER - <stdin>:401] tmpdir: /var/folders/ps/cqv_3ytx5nn59k5q3k17th500000gn/T/combustion-40417 (id: 40417l)
-[COMBUSTION LOADER - <stdin>:159] Loaded binary: 0x105e5a000 (size: 124112)
-[COMBUSTION LOADER - <stdin>:166] Searching for bytes:
- 21 40 21 5F 43 4F 4D 42 55 53 54 49 4F 4E 5F 4D 41 47 49 43 5F 21 40 21 35 B1 0 B 0[COMBUSTION LOADER - <stdin>:169] 
-[COMBUSTION LOADER - <stdin>:173] [31mError finding zip file: 
-No such file or directory
