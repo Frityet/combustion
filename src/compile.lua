@@ -6,15 +6,19 @@
 ---@class Combustion.BuildOptions
 ---@field lua Lua
 ---@field c_compiler string?
----@field c_flags string[]
+---@field cflags string[]
+---@field ldflags string[]
 ---@field linker string?
 ---@field build_dir string
 ---@field bin_dir string
 ---@field lua_source_dir string
 ---@field lua_files string[]
+---@field luac_objects string[]
 ---@field lib_dir string?
 ---@field c_libraries string[]?
 ---@field link string[]?
+---@field lua_libdir string?
+---@field lua_incdir string?
 ---@field resources_dir string?
 ---@field resources string[]?
 ---@field frameworks string[]?
@@ -33,7 +37,7 @@ local utilities = require("utilities")
 ---@param dst string
 ---@return boolean ok, string? err
 local function compile_lua(luac, src, dst)
-    if luac == "luajit" then
+    if luac:find("luajit") then
         local ok, err = utilities.programs[luac] "-b"(src)(dst)()
     else
         local ok, err = utilities.programs[luac] "-o"(dst)(src)()
@@ -47,6 +51,7 @@ end
 ---@return Combustion.BuildOptions options
 local function validate_arguments(arg)
     ---@type Combustion.BuildOptions
+    ---@diagnostic disable-next-line: missing-fields
     local opts = {}
 
     local ok, err = directory.makepath(arg.output_dir)
@@ -87,7 +92,8 @@ local function validate_arguments(arg)
         if not luaver then error(err) end
         opts.lua = {
             interpreter = arg.lua,
-            version = luaver
+            version = luaver,
+            compiler = ""
         }
     end
 
@@ -115,10 +121,11 @@ local function validate_arguments(arg)
         opts.linker = arg.linker
     end
 
-    if arg.c_flags then
-        opts.c_flags = arg.c_flags
-    end
-
+    opts.cflags = arg.cflags or { utilities.is_gcc_like(opts.c_compiler) and "-Os" or "/O2" }
+    opts.ldflags = arg.ldflags or {}
+    opts.link = arg.link or nil
+    opts.lua_libdir = arg.lua_libdir
+    opts.lua_incdir = arg.lua_incdir
 
     opts.entry = arg.entry
     opts.verbose = arg.verbose
@@ -148,6 +155,7 @@ return function (arg)
         srcs[dir] = utilities.find(dir, ".lua")
     end
 
+    opts.luac_objects = {}
     print("Compiling lua files with "..opts.lua.compiler.."...")
     for k, v in pairs(srcs) do
         --Compile each file, making sure that the directory structure is preserved
@@ -165,6 +173,8 @@ return function (arg)
             end
             ok = compile_lua(opts.lua.compiler, file, dest)
             if not ok then error("Failed to compile "..file) end
+
+            opts.luac_objects[#opts.luac_objects + 1] = dest
         end
     end
 
@@ -193,7 +203,7 @@ return function (arg)
 
                 local ok, err = directory.makepath(path.dirname(dest))
                 if not ok then error(err) end
-                ok = file.copy(lib, dest)
+                ok = file.copy(lib, dest, true)
                 if not ok then error("Failed to copy "..lib) end
             end
         end
@@ -216,7 +226,7 @@ return function (arg)
 
                 local ok, err = directory.makepath(path.dirname(dest))
                 if not ok then error(err) end
-                ok = file.copy(res, dest)
+                ok = file.copy(res, dest, true)
                 if not ok then error("Failed to copy "..res) end
             end
         end

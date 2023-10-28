@@ -1,7 +1,5 @@
+
 {
-    "Lua.diagnostics.globals": [
-        "lfs"
-    ],
     "Lua.workspace.checkThirdParty": false,
     "diagnostics.groupSeverity": {
         "ambiguity": "Error",
@@ -15,7 +13,8 @@
         "strong": "Error",
         "type-check": "Error",
         "unbalanced": "Error",
-        "unused": "Hint"
+        "unused": "Hint",
+        "conventions": "Error"
     },
     "diagnostics.disable": [
         "duplicate-doc-alias",
@@ -24,22 +23,21 @@
     "runtime.path": [
         "src/?.lua",
         "src/?/init.lua",
-        "lua_modules/share/lua/5.1/?.lua",
-        "lua_modules/share/lua/5.1/?/init.lua"
+        "?.lua",
+        "?/init.lua"
     ],
     "runtime.pathStrict": true,
     "runtime.version": "LuaJIT",
     "workspace.ignoreDir": [
-        ".vscode"
+        ".vscode",
+        "build"
     ],
     "workspace.library": [
-        "types/argparse/",
-        "types/pl/",
+        "/Users/frityet/Library/Application Support/Code/User/globalStorage/sumneko.lua/addonManager/addons/argparse/module/library",
+        "/Users/frityet/Library/Application Support/Code/User/globalStorage/sumneko.lua/addonManager/addons/penlight/module/library",
         "${3rd}/lfs/library",
-        "lua_modules/lib/lua/5.1/",
-        "lua_modules/share/lua/5.1/",
+        // "lua_modules/share/lua/5.1/",
+        // "lua_modules/lib/lua/5.1/"
     ],
-    "diagnostics.libraryFiles": "Opened",
-    "workspace.useGitIgnore": false,
-
+    "workspace.useGitIgnore": false
 }

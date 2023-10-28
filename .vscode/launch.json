@@ -14,7 +14,7 @@
             "env": {
                 "LUAROCKS_SYSCONFDIR": "/usr/local/etc/luarocks"
             },
-            "luaVersion": "jit",
+            "luaVersion": "luajit",
             "stopOnEntry": false,
             "luaexe": "luajit",
             "console": "internalConsole",

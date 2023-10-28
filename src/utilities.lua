@@ -95,6 +95,7 @@ end
 ---@return Lua? info, string? err
 function export.find_lua()
     ---@type Lua
+    ---@diagnostic disable-next-line: missing-fields
     local luainfo = {}
 
     for _, name in ipairs { "", "5.1", "5.2", "5.3", "5.4", "jit" } do
@@ -185,10 +186,10 @@ end
 ---@param symname string
 ---@param data string
 ---@param size number?
----@return string
+---@return string, number size
 function export.bin2c(symname, data, size)
     size = size or #data
-    local buf = string.buffer.new((size * 8) + #("#include <stddef.h>\n\nconst unsigned char "..symname.."[] = {\n};\nconst size_t "..symname.."_size = "..size..";\n"))
+    local buf = string.buffer.new((size * 8) + string.len("#include <stddef.h>\n\nconst unsigned char "..symname.."[] = {\n};\nconst size_t "..symname.."_size = "..size..";\n"))
 
     buf:putf("#include <stddef.h>\n\nconst unsigned char %s[] = {\n", symname)
     for i = 1, #data do
@@ -197,7 +198,7 @@ function export.bin2c(symname, data, size)
     end
     buf:putf("\n};\nconst size_t %s_size = %d;\n", symname, size)
 
-    return buf:tostring()
+    return buf:tostring(), size
 end
 
 ---Bin2C that works on non-luajit, so no `string.buffer`
@@ -217,6 +218,55 @@ function export.bin2c_portable(symname, data, size)
     table.insert(buf, "\n};\nconst size_t "..symname.."_size = "..size..";\n")
 
     return table.concat(buf)
+end
+
+---@brief hash string
+---@param str string
+---@return number
+function export.hash_portable(str)
+    -- see: https://stackoverflow.com/a/7666577
+    local hash = 5381
+    for i = 1, #str do
+        hash = (bit.lshift(hash, 5) + hash) + string.byte(string.sub(str, i, i))
+    end
+    return hash
+end
+
+---@brief hash string
+---@param str string
+---@return number
+function export.hash(str)
+    local ffi = require("ffi")
+    -- see: https://stackoverflow.com/a/7666577
+    local hash = ffi.new("uint32_t", 5381)
+    for i = 1, #str do
+---@diagnostic disable-next-line: param-type-mismatch
+        hash = (bit.lshift(hash, 5) + hash) + string.byte(string.sub(str, i, i))
+    end
+    return assert(tonumber(hash))
+end
+
+---@brief unhash number
+---@param hash number
+---@return string
+function export.unhash_portable(hash)
+    local str = ""
+    while hash > 0 do
+        str = str..string.char(hash % 256)
+        hash = math.floor(hash / 256)
+    end
+    return str
+end
+
+---Turns a string into a series of hex bytes, i,e "Hello" -> "48656c6c6f" as a string
+---@param string string
+---@return string
+function export.hex_encode(string)
+    local hex = ""
+    for i = 1, #string do
+        hex = hex..string.format("%02X", string:byte(i))
+    end
+    return hex
 end
 
 return export

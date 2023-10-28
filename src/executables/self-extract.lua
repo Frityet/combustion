@@ -15,9 +15,6 @@ local zip = require("zip")
 return function (opt)
     if not opt.c_compiler then error("No C compiler specified") end
 
-    opt.c_flags = opt.c_flags or { utilities.is_gcc_like(opt.c_compiler) and "-Os" or "/O2" }
-
-
     ---@param contents string
     ---@param ... string
     ---@return { to: fun(self, to: string): boolean, string? }
@@ -54,17 +51,17 @@ return function (opt)
             end,
 
             to = function (self, to)
-                local linkercmd = utilities.programs[assert(opt.linker)]
+                local linker = utilities.programs[assert(opt.linker)]
                 for _, file in ipairs(files) do
-                    linkercmd = linkercmd(file)
+                    linker = linker(file)
                 end
 
-                linkercmd = linkercmd "-o" (to) "-L" (opt.lib_dir or "./")
+                linker = linker "-o" (to) "-L" (opt.lib_dir or "./")
                 if self.libs ~= nil then
-                    linkercmd = linkercmd("-l"..table.concat(self.libs, " -l"))
+                    linker = linker("-l"..table.concat(self.libs, " -l"))
                 end
 
-                local out, err = linkercmd()
+                local out, err = linker()
                 print(string.format("$ %s %s -o %s %s", opt.linker, table.concat(files, " "), to, "-l"..table.concat(self.libs or {}, " -l")))
                 if not out then return false, err end
                 return true
@@ -76,11 +73,11 @@ return function (opt)
     local obj_dir = path.join(opt.build_dir, "obj")
     path.rmdir(obj_dir)
     file.delete(bin)
-    local ok, err = file.copy(opt.lua.interpreter, bin)
+    local ok, err = file.copy(opt.lua.interpreter, bin, true)
     if not ok then error(err) end
 
     --Copy the lua interpreter to the bin directory
-    file.copy(opt.lua.interpreter, path.join(opt.bin_dir, "lua"..(utilities.platform == "Windows" and ".exe" or "")))
+    file.copy(opt.lua.interpreter, path.join(opt.bin_dir, "lua"..(utilities.platform == "Windows" and ".exe" or "")), false)
 
     local ok, err = directory.makepath(obj_dir)
     if not ok then error(err) end
@@ -102,14 +99,14 @@ return function (opt)
     if not ok then error("Could not write miniz header to "..miniz_header_path) end
 
     table.insert(objects, path.join(obj_dir, "miniz.o"))
-    ok, err = compile(miniz.source, "-I"..obj_dir, table.unpack(opt.c_flags))
+    ok, err = compile(miniz.source, "-I"..obj_dir, table.unpack(opt.cflags))
                 :to(objects[1])
     if not ok then error(err) end
 
     --Now, we need to compile the self-extracting executable "loader"
     local loader_source = require("executables.loaders.self-extract.loader")
     table.insert(objects, path.join(obj_dir, "loader.o"))
-    ok, err = compile(loader_source, table.unpack(opt.c_flags),
+    ok, err = compile(loader_source, table.unpack(opt.cflags),
                       "-I"..obj_dir,
                       "-DCOMBUSTION_ENTRY=\""..opt.entry.."\"",
                       ((opt.graphical and utilities.platform == "Windows") and "-DWIN32_GRAPHICAL" or ""))
@@ -119,7 +116,7 @@ return function (opt)
     --Finally, we need to compile the bin2c result of the zip file
     local data = utilities.bin2c("zipfile", contents, size)
     table.insert(objects, path.join(obj_dir, "zipfile.o"))
-    ok, err = compile(data, "-I"..obj_dir, table.unpack(opt.c_flags))
+    ok, err = compile(data, "-I"..obj_dir, table.unpack(opt.cflags))
               :to(objects[3])
     if not ok then error(err) end
 

@@ -11,19 +11,20 @@
 ---@field source_dirs string[]
 ---@field library_dirs string[]
 ---@field link string[]
+---@field lua_incdir string?
+---@field lua_libdir string?
 ---@field resources_dirs string[]
 ---@field lua string?
 ---@field luac string?
 ---@field entry string
 ---@field name string
 ---@field c_compiler string
----@field c_flags string[]?
+---@field cflags string[]?
+---@field ldflags string[]?
 ---@field linker string
 ---@field verbose boolean
 ---@field graphical boolean
 
-
----@type argparse
 local argparse = require("argparse")
 local pretty = require("pl.pretty")
 local path = require("pl.path")
@@ -34,6 +35,7 @@ local compile = require("compile")
 local executables = require("executables")
 
 local lprint, lerror = print, error
+unpack = unpack or table.unpack
 
 
 ---Regular print can't print tables, and pprint has quotations around strings, so this is the best solution
@@ -67,9 +69,12 @@ local parser = argparse() {
 
 parser:add_complete()
 
-parser:argument("type", "The type of project to pack.")
+local t_choices = tablex.keys(require("executables"))
+if t_choices[1] == "source" or t_choices[1] == "header" then error("ERROR ERROR ERROR", t_choices) end
+
+parser:option("-t --type", "The type of project to pack.")
         :args(1)
-        :choices(tablex.keys(require("executables")))
+        :choices(t_choices)
         :default "self-extract"
 
 
@@ -79,7 +84,7 @@ parser:option("-o --output-dir", "The output directory to write to.")
         :default "build"
         :convert(path.abspath)
 
-parser:option("-S --source-dirs", "The source directory to pack.")
+parser:option("-S --source-dirs", "The source directories to pack.")
         :args "+"
         :default "."
         :convert(function (f)
@@ -87,16 +92,30 @@ parser:option("-S --source-dirs", "The source directory to pack.")
             return path.abspath(f)
         end)
 
-parser:option("-L --library-dirs", "Location of C libraries")
+parser:option("-L --library-dirs", "Locations of C libraries")
         :args "+"
         :convert(function (f)
             if not path.isdir(f) then error("Library directory "..f.." does not exist.") end
             return path.abspath(f)
         end)
 
-parser:option("-l --link", "Libraries to statically link")
+parser:option("-l --link", "Libraries to link with")
         :args "+"
         :default { "c", "m" }
+
+parser:option("--lua-incdir", "Location of lua headers (required for `static` build)")
+        :args(1)
+        :convert(function (f)
+            if not path.isdir(f) then error("Lua include directory "..f.." does not exist.") end
+            return path.abspath(f)
+        end)
+
+parser:option("--lua-libdir", "Location of liblua (required for `static` build)")
+        :args(1)
+        :convert(function (f)
+            if not path.isdir(f) then error("Lua library directory "..f.." does not exist.") end
+            return path.abspath(f)
+        end)
 
 
 parser:option("-R --resource-dirs", "Additional resources to pack.")

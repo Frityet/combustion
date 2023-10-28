@@ -278,16 +278,9 @@ static
 //This program will be run when the executable is run, and it will unpack the zip file to tmpdir, and run the lua interpreter on the entrypoint file
 int main(int argc, char *argv[static argc])
 {
-    if (argc > 1) {
-        debug_output = strcmp(argv[1], "$COMBUSTION_VERBOSE$") == 0;
-        if (debug_output) {
-            argv++;
-            argv[0] = argv[-1]; // need proper argv[0] for debug output
-            argc--;
-        }
-    }
-
+    debug_output = getenv("COMBUSTION_LOADER_VERBOSE") != NULL;
     srand(time(NULL));
+
     //Directory setup
     char cwd[PATH_MAX] = {0}, tmpdir[PATH_MAX] = {0};
     getcwd(cwd, PATH_MAX);

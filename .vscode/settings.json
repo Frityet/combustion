@@ -2,5 +2,6 @@
     "licenser.license": "MIT",
     "clangd.fallbackFlags": [
         "-I../../../",
-    ]
+        "-I/usr/local/include/luajit-2.1"
+    ],
 }

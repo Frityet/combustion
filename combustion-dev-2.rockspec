@@ -35,9 +35,15 @@ build = {
         ["compile"] = "src/compile.lua",
 
         ["executables"] = "src/executables/init.lua",
+
         ["executables.self-extract"] = "src/executables/self-extract.lua",
         ["executables.loaders.self-extract.loader"] = "src/executables/loaders/self-extract/loader.lua",
         ["executables.loaders.self-extract.miniz"] = "src/executables/loaders/self-extract/miniz.lua",
+
+        ["executables.static"] = "src/executables/static.lua",
+        ["executables.loaders.static.loader"] = "src/executables/loaders/static/loader.lua",
+        ["executables.loaders.static.module-template"] = "src/executables/loaders/static/module-template.lua",
+        ["executables.loaders.static.compat-53-c"] = "src/executables/loaders/static/compat-53-c.lua",
         ["zip"] = {
             sources = { "src/miniz.c", "src/zip.c" },
             incdirs = { "src/" }
