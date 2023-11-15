@@ -105,8 +105,8 @@ return function (opt)
 
     opt.cflags[#opt.cflags+1] = "-I"..obj_dir
     opt.cflags[#opt.cflags+1] = "-I"..opt.lua_incdir
-    opt.cflags[#opt.cflags+1] = "-g"
-    opt.cflags[#opt.cflags+1] = "-Og"
+    -- opt.cflags[#opt.cflags+1] = "-g"
+    -- opt.cflags[#opt.cflags+1] = "-Og"
 
     ---@type string?
     local entry_symbol = nil
@@ -118,7 +118,7 @@ return function (opt)
     --compile all the modules, use the `executables.loaders.static.module-template` with different defines
     for _, module in ipairs(opt.luac_objects) do
         local cflags = tablex.copy(opt.cflags)
-        local mangled_name = ("lua_%02X"):format(utilities.hash(module))
+        local mangled_name = ("lua_%s"):format(utilities.hex_encode(module))
         local sym, symsize = utilities.bin2c(mangled_name.."_luac", file.read(module))
         local luac_objc = path.join(obj_dir, mangled_name..".luac.o")
 

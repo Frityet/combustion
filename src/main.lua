@@ -48,10 +48,10 @@ function print(...)
     else print(pretty.write(a)) end
 end
 
-function error(msg, i)
+function error(msg, n)
     if type(msg) == "table" then msg = pretty.write(msg)
     elseif type(msg) ~= "string" then msg = tostring(msg) end
-    return lerror("\n\x1b[31m"..msg.."\x1b[0m", i)
+    return lerror("\n\x1b[31m"..msg.."\x1b[0m", n)
 end
 
 ---@diagnostic disable-next-line: lowercase-global
@@ -70,7 +70,7 @@ local parser = argparse() {
 parser:add_complete()
 
 local t_choices = tablex.keys(require("executables"))
-if t_choices[1] == "source" or t_choices[1] == "header" then error("ERROR ERROR ERROR", t_choices) end
+if t_choices[1] == "source" or t_choices[1] == "header" then error({"ERROR ERROR ERROR", t_choices}) end
 
 parser:option("-t --type", "The type of project to pack.")
         :args(1)

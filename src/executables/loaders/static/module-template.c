@@ -38,16 +38,16 @@ static void debug_f(const char *fmt, ...)
 }
 #define debug(fmt, ...) do { debug_f("["__FILE__":"STRINGIFY(__LINE__)"] " fmt __VA_OPT__(,) __VA_ARGS__); } while (0)
 
-static void perror_f(lua_State *lua, const char *fmt, ...)
+static void perror_f(const char *fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
     static char buf[1024] = {0};
     vsnprintf(buf, 1024, fmt, args);
     va_end(args);
-    luaL_error(lua, "%s: %s", buf, strerror(errno));
+    perror(buf);
 }
-#define error(fmt, ...) do { perror_f(lua, "["__FILE__":"STRINGIFY(__LINE__)"] " fmt __VA_OPT__(,) __VA_ARGS__); exit(1); } while (0)
+#define error(fmt, ...) do { perror_f("["__FILE__":"STRINGIFY(__LINE__)"] " fmt __VA_OPT__(,) __VA_ARGS__); exit(1); } while (0)
 
 
 DECLARE_MODULE(COMBUSTION_MODULE_SYMBOL)
