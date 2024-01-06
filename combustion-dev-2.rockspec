@@ -31,20 +31,20 @@ build = {
     },
 
     modules = {
-        ["utilities"] = "src/utilities.lua",
-        ["compile"] = "src/compile.lua",
+        ["combustion.utilities"] = "src/utilities.lua",
+        ["combustion.compile"] = "src/compile.lua",
 
-        ["executables"] = "src/executables/init.lua",
+        ["combustion.executables"] = "src/executables/init.lua",
 
-        ["executables.self-extract"] = "src/executables/self-extract.lua",
-        ["executables.loaders.self-extract.loader"] = "src/executables/loaders/self-extract/loader.lua",
-        ["executables.loaders.self-extract.miniz"] = "src/executables/loaders/self-extract/miniz.lua",
+        ["combustion.executables.self-extract"] = "src/executables/self-extract.lua",
+        ["combustion.executables.loaders.self-extract.loader"] = "src/executables/loaders/self-extract/loader.lua",
+        ["combustion.executables.loaders.self-extract.miniz"] = "src/executables/loaders/self-extract/miniz.lua",
 
-        ["executables.static"] = "src/executables/static.lua",
-        ["executables.loaders.static.loader"] = "src/executables/loaders/static/loader.lua",
-        ["executables.loaders.static.module-template"] = "src/executables/loaders/static/module-template.lua",
-        ["executables.loaders.static.compat-53-c"] = "src/executables/loaders/static/compat-53-c.lua",
-        ["zip"] = {
+        ["combustion.executables.static"] = "src/executables/static.lua",
+        ["combustion.executables.loaders.static.loader"] = "src/executables/loaders/static/loader.lua",
+        ["combustion.executables.loaders.static.module-template"] = "src/executables/loaders/static/module-template.lua",
+        ["combustion.executables.loaders.static.compat-53-c"] = "src/executables/loaders/static/compat-53-c.lua",
+        ["combustion.zip"] = {
             sources = { "src/miniz.c", "src/zip.c" },
             incdirs = { "src/" }
         }

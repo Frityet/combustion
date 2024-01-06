@@ -7,7 +7,7 @@ local path = require("pl.path")
 local directory = require("pl.dir")
 local file = require("pl.file")
 local tablex = require("pl.tablex")
-local utilities = require("utilities")
+local utilities = require("combustion.utilities")
 
 ---@param opt Combustion.BuildOptions
 return function (opt)
@@ -94,11 +94,11 @@ return function (opt)
     assert(directory.makepath(obj_dir))
 
     --first, copy compat53 to the obj dir, needed for compiling modules
-    local compat53 = require("executables.loaders.static.compat-53-c")
+    local compat53 = require("combustion.executables.loaders.static.compat-53-c")
     assert(file.write(path.join(obj_dir, "compat-5.3.h"), compat53.header))
     assert(file.write(path.join(obj_dir, "compat-5.3.c"), compat53.source))
 
-    local template = require("executables.loaders.static.module-template")
+    local template = require("combustion.executables.loaders.static.module-template")
     local template_path = path.join(obj_dir, "module-template.c")
     assert(file.write(template_path, template))
 
@@ -190,7 +190,7 @@ return function (opt)
     --Compile the entry point
     --write it to a file in the obj dir, we want it to be a file so that `__FILE__` and `__LINE__` work
     local entry_source_path = path.join(obj_dir, "combustion-entry.c")
-    assert(file.write(entry_source_path, require("executables.loaders.static.loader")))
+    assert(file.write(entry_source_path, require("combustion.executables.loaders.static.loader")))
 
     --first, we need to make the module list, in the format of `{ "name", module_symbol }, { "name2", module_symbol2 }, ...`
 

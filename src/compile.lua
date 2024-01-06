@@ -30,7 +30,7 @@
 local directory = require("pl.dir")
 local path = require("pl.path")
 local file = require("pl.file")
-local utilities = require("utilities")
+local utilities = require("combustion.utilities")
 
 ---@param luac string
 ---@param src string

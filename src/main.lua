@@ -30,9 +30,9 @@ local pretty = require("pl.pretty")
 local path = require("pl.path")
 local tablex = require("pl.tablex")
 
-local utilities = require("utilities")
-local compile = require("compile")
-local executables = require("executables")
+local utilities = require("combustion.utilities")
+local compile = require("combustion.compile")
+local executables = require("combustion.executables")
 
 local lprint, lerror = print, error
 unpack = unpack or table.unpack
@@ -69,7 +69,7 @@ local parser = argparse() {
 
 parser:add_complete()
 
-local t_choices = tablex.keys(require("executables"))
+local t_choices = tablex.keys(require("combustion.executables"))
 if t_choices[1] == "source" or t_choices[1] == "header" then error({"ERROR ERROR ERROR", t_choices}) end
 
 parser:option("-t --type", "The type of project to pack.")
