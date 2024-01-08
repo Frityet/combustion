@@ -18,12 +18,12 @@ print("Copying contents of self-extract...")
 do
     ---@type string
     local selfextract do
-        local f = assert(io.open("src/executables/loaders/self-extract/self-extract.c", "r"))
+        local f = assert(io.open("src/combustion/executables/loaders/self-extract/self-extract.c", "r"))
         selfextract = f:read("*a")
         f:close()
     end
 
-    local selfextract_lua = assert(io.open("src/executables/loaders/self-extract/loader.lua", "w+"))
+    local selfextract_lua = assert(io.open("src/combustion/executables/loaders/self-extract/loader.lua", "w+"))
     selfextract_lua:write(string.format("return [[\n%s\n]]", selfextract))
     selfextract_lua:close()
 end
@@ -32,23 +32,23 @@ print("Copying contents of static...")
 do
     ---@type string
     local selfextract do
-        local f = assert(io.open("src/executables/loaders/static/static.c", "r"))
+        local f = assert(io.open("src/combustion/executables/loaders/static/static.c", "r"))
         selfextract = f:read("*a")
         f:close()
     end
 
-    local selfextract_lua = assert(io.open("src/executables/loaders/static/loader.lua", "w+"))
+    local selfextract_lua = assert(io.open("src/combustion/executables/loaders/static/loader.lua", "w+"))
     selfextract_lua:write(string.format("return [[\n%s\n]]", selfextract))
     selfextract_lua:close()
 
     ---@type string
     local template do
-        local f = assert(io.open("src/executables/loaders/static/module-template.c", "r"))
+        local f = assert(io.open("src/combustion/executables/loaders/static/module-template.c", "r"))
         template = f:read("*a")
         f:close()
     end
 
-    local template_lua = assert(io.open("src/executables/loaders/static/module-template.lua", "w+"))
+    local template_lua = assert(io.open("src/combustion/executables/loaders/static/module-template.lua", "w+"))
     template_lua:write(string.format("return [[\n%s\n]]", template))
     template_lua:close()
 end

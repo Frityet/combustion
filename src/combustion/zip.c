@@ -182,7 +182,7 @@ static int add_files_to_zip(mz_zip_archive *zip, const char *dir, const char *pr
 }
 #endif
 
-int luaopen_zip(lua_State *L)
+int luaopen_combustion_zip(lua_State *L)
 {
     lua_pushcfunction(L, zip);
     return 1;

@@ -6,10 +6,10 @@
 local path = require("pl.path")
 local directory = require("pl.dir")
 local file = require("pl.file")
-local utilities = require("utilities")
+local utilities = require("combustion.utilities")
 
 ---@type fun(directory: string): string?, integer?, string?
-local zip = require("zip")
+local zip = require("combustion.zip")
 
 ---@param opt Combustion.BuildOptions
 return function (opt)
@@ -92,7 +92,7 @@ return function (opt)
     if not contents then error(err) end
 
     --First, we need to compile miniz by copying the header into the "obj" directory and then compiling the source file
-    local miniz = require("executables.loaders.self-extract.miniz")
+    local miniz = require("combustion.executables.loaders.self-extract.miniz")
     local miniz_header_path = path.join(obj_dir, "miniz.h")
 
     ok  = file.write(miniz_header_path, miniz.header)
@@ -104,7 +104,7 @@ return function (opt)
     if not ok then error(err) end
 
     --Now, we need to compile the self-extracting executable "loader"
-    local loader_source = require("executables.loaders.self-extract.loader")
+    local loader_source = require("combustion.executables.loaders.self-extract.loader")
     table.insert(objects, path.join(obj_dir, "loader.o"))
     ok, err = compile(loader_source, table.unpack(opt.cflags),
                       "-I"..obj_dir,
