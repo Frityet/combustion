@@ -45,7 +45,7 @@ build = {
         ["combustion.executables.loaders.static.module-template"] = "src/combustion/executables/loaders/static/module-template.lua",
         ["combustion.executables.loaders.static.compat-53-c"] = "src/combustion/executables/loaders/static/compat-53-c.lua",
         ["combustion.zip"] = {
-            sources = { "src/combustion/miniz.c", "src/combustion/zip.c" },
+            sources = { "src/miniz.c", "src/combustion/zip.c" },
             incdirs = { "src/combustion/" }
         }
     }
